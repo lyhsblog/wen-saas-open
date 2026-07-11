@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.wensaas</groupId>
+        <artifactId>wen-saas-boot-core</artifactId>
+        <version>0.9.0</version>
+    </parent>
+
+    <artifactId>wen-saas-boot-core-impl</artifactId>
+    <name>${project.artifactId}</name>
+    <description>底座实现：SPI 注册、多租户、权限、缓存、消息、文件、操作日志等</description>
+
+    <dependencies>
+        <!-- Lombok：响应 DTO 可变 POJO 化 -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.wensaas</groupId>
+            <artifactId>wen-saas-boot-core-api</artifactId>
+        </dependency>
+
+        <!-- Spring Boot 基础 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+        <!-- AOP（@CrossTenantQuery 切面、后续权限切面均依赖） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aspectj</artifactId>
+        </dependency>
+        <!-- Servlet 拦截器：spring-web 提供 OncePerRequestFilter，jakarta.servlet-api 由容器提供 -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+        <!-- spring-webmvc：AuthPathMatcher 需要 HandlerMapping / HandlerExecutionChain 解析 @PublicEndpoint -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- 持久化：JDBC + MyBatis-Plus + PostgreSQL -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot4-starter</artifactId>
+        </dependency>
+        <!-- 启用 TenantLineInnerInterceptor / DynamicTableNameInnerInterceptor 等基于 SQL 解析的拦截器 -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-jsqlparser</artifactId>
+            <version>${mybatis-plus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+        </dependency>
+        <!-- Spring Boot 4 模块化：autoconfig 已搬离 spring-boot-autoconfigure，需用专门 starter -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- 缓存 / 会话 / 限流 / 分布式协调（架构审查 M1）。
+             redisson-spring-boot-starter 作为唯一 Redis 工厂：透传 spring-data-redis（StringRedisTemplate 不变）
+             + redisson-spring-data（RedissonConnectionFactory）+ redisson core（RLock 等）。
+             排除 lettuce-core，使 Redisson 成为唯一 RedisConnectionFactory；连接配置仍读 spring.data.redis.*。 -->
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson-spring-boot-starter</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.lettuce</groupId>
+                    <artifactId>lettuce-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- 本地缓存（TenantActivityGuard tenantId→status）；版本由 spring-boot-dependencies BOM 管理 -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
+        <!-- 消息 / 调度 -->
+        <dependency>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-v5-client-spring-boot-starter</artifactId>
+            <!--
+              RocketMQ 5.x gRPC 客户端（rocketmq-client-java），连 Proxy endpoints。
+              starter 仍传递 com.alibaba:fastjson 1.x（v5 spring 模块内部用）；曾试 exclusion 启动期报
+              NoClassDefFoundError，故保留传递依赖。业务代码统一 fastjson2，fastjson 1.x 仅供 RocketMQ 内部使用。
+            -->
+        </dependency>
+        <!-- 内嵌 Quartz：定时任务调度，无外部调度中间件；JDBC 集群存储（PG 独立 quartz schema，
+             表由 Flyway V1.0.14 管理），集群单节点触发 + misfire 补跑，JobLockSupport（Redis 锁）
+             作第二道兜底。版本由 spring-boot-dependencies BOM 托管。 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-quartz</artifactId>
+        </dependency>
+
+        <!--
+          Micrometer 指标 API：仅用于 DeadLetterRecorder 的 DLQ 死信 counter。
+          provided：编译期可见，运行期由 app 的 spring-boot-starter-actuator + micrometer-registry-prometheus
+          提供 MeterRegistry（core-web 已引 actuator）；core-impl 不强加观测栈给下游。无 MeterRegistry 时
+          counter 优雅跳过（ObjectProvider 兜底）。版本由 spring-boot-dependencies BOM 托管。
+        -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- JWT（认证与会话） -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- 密码哈希：BCrypt 由 spring-security-crypto 提供（替代旧 hutool BCrypt） -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
+
+        <!-- 通用 JSON -->
+        <dependency>
+            <groupId>com.alibaba.fastjson2</groupId>
+            <artifactId>fastjson2</artifactId>
+        </dependency>
+
+        <!--
+          Jackson 3（tools.jackson）：审计渲染 readTree / object_refs 序列化与 HTTP 响应序列化同源，
+          复用全局 ObjectMapper（雪花 Long→string、时区格式）。此前审计路径误用 jjwt 传递进来的
+          Jackson 2（com.fasterxml），与响应层 Jackson 3 两套并存——故显式声明该 starter（版本由 BOM 托管）。
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-json</artifactId>
+        </dependency>
+
+        <!-- Excel 读写（数据导入框架：模板生成 / 上传解析 / 错误明细） -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+
+        <!-- 阿里云 OSS SDK（文件存储抽象层 AliyunOssFileStorageAdapter） -->
+        <dependency>
+            <groupId>com.aliyun.oss</groupId>
+            <artifactId>aliyun-sdk-oss</artifactId>
+        </dependency>
+
+        <!-- 腾讯云 COS SDK（文件存储抽象层 TencentCosFileStorageAdapter） -->
+        <dependency>
+            <groupId>com.qcloud</groupId>
+            <artifactId>cos_api</artifactId>
+        </dependency>
+
+        <!-- 邮件（通知通道 EmailChannelAdapter）。dev/test 默认 noop 不真发 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
+        <!-- 阿里云短信 SDK（SMS 通道 SmsChannelAdapter）。凭据未就绪时 noop 不真发 -->
+        <dependency>
+            <groupId>com.aliyun</groupId>
+            <artifactId>dysmsapi20170525</artifactId>
+        </dependency>
+
+        <!-- TOTP（运营 MFA Authenticator 通道） -->
+        <dependency>
+            <groupId>dev.samstevens.totp</groupId>
+            <artifactId>totp</artifactId>
+        </dependency>
+
+        <!-- 测试 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- 领域边界静态门禁：纯静态分析，不打 live 库 -->
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>1.4.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

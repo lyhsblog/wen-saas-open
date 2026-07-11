@@ -1,0 +1,13 @@
+.DS_Store
+Thumbs.db
+*.log
+logs/
+data/
+tmp/
+.idea/
+.vscode/
+.claude/
+node_modules/
+target/
+dist/
+coverage/

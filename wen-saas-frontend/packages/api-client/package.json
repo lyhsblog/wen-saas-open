@@ -1,0 +1,26 @@
+{
+  "name": "@wen-saas/api-client",
+  "version": "0.9.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./mocks": "./src/mocks/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "@wen-saas/domain": "workspace:*",
+    "axios": "^1.16.1"
+  },
+  "peerDependencies": {
+    "msw": "^2"
+  },
+  "peerDependenciesMeta": {
+    "msw": {
+      "optional": true
+    }
+  }
+}

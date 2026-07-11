@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wensaas.core.impl.webhook.SysWebhookMapper">
+
+    <resultMap id="webhookResultMap" type="com.wensaas.core.impl.webhook.SysWebhook" autoMapping="true">
+        <id property="id" column="id"/>
+        <result property="subscribedEvents" column="subscribed_events"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result property="retryPolicy" column="retry_policy"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+    </resultMap>
+
+    <!-- 用 PG jsonb @> 包含查询命中 GIN 索引 idx_webhook_subscribed_events -->
+    <select id="selectActiveByEvent" resultMap="webhookResultMap">
+        SELECT *
+        FROM sys_webhook
+        WHERE tenant_id = #{tenantId}
+          AND status = 'active'
+          AND subscribed_events @> jsonb_build_array(#{eventType}::text)
+    </select>
+
+    <!-- 原子自增 + 取回新值（PG UPDATE ... RETURNING），防并发失败丢计数 -->
+    <select id="incrementConsecutiveFailures" resultType="int">
+        UPDATE sys_webhook
+        SET consecutive_failures = consecutive_failures + 1, updated_at = now()
+        WHERE id = #{id}
+        RETURNING consecutive_failures
+    </select>
+
+    <update id="disableIfActive">
+        UPDATE sys_webhook
+        SET status = 'disabled', updated_at = now()
+        WHERE id = #{id} AND status = 'active'
+    </update>
+
+</mapper>

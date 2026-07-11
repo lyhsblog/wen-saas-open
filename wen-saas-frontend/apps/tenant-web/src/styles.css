@@ -1,0 +1,149 @@
+@import '@wen-saas/design-system/tokens.css';
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-base);
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: var(--brand);
+  text-decoration: none;
+}
+
+code {
+  font-family: var(--font-mono, ui-monospace, 'SF Mono', Menlo, Consolas, monospace);
+}
+
+/* 数据导入预览：错误行底色（product/24 §五） */
+.import-row-error > td {
+  background: var(--danger-bg, oklch(0.97 0.02 25));
+}
+
+/* 窄屏左栏抽屉（NavRailDrawer）内的 Spin 嵌套包装：继承抽屉高度，栏内容自滚动 */
+.rail-drawer-spin,
+.rail-drawer-spin .ant-spin-container {
+  height: 100%;
+}
+
+/* 通讯录部门树：dnd-kit 自绘行（替换 antd Tree），仅作用于 .dept-tree-scope，不外溢 */
+.dept-tree-scope .dept-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  margin-inline: 4px;
+  padding-inline-end: 12px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+.dept-tree-scope .dept-row:not([data-overlay]):hover {
+  background: var(--bg-muted);
+}
+.dept-tree-scope .dept-row--selected {
+  font-weight: 500;
+  color: var(--brand);
+  background: var(--brand-bg);
+}
+.dept-tree-scope .dept-row__switcher {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.dept-tree-scope .dept-row__switcher:hover {
+  color: var(--text-secondary);
+}
+.dept-tree-scope .dept-row__icon {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+.dept-tree-scope .dept-row--selected .dept-row__icon {
+  color: var(--brand);
+}
+.dept-tree-scope .dept-row__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dept-tree-scope .dept-row__badge {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--danger);
+  background: rgba(255, 0, 0, 0.06);
+  padding: 0 6px;
+  border-radius: 4px;
+}
+.dept-tree-scope .dept-row__count {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+/* 拖拽中的安全取消区：粘在底部、醒目的红色提示，拖到此处松手放弃本次调整 */
+.dept-tree-scope .dept-drag-cancel {
+  position: sticky;
+  bottom: 6px;
+  z-index: 1;
+  margin: 10px 8px 4px;
+  padding: 13px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--danger);
+  border: 2px dashed var(--danger);
+  border-radius: 10px;
+  background: var(--danger-bg);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  animation: dept-cancel-in 0.18s ease-out;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s,
+    background 0.15s;
+}
+.dept-tree-scope .dept-drag-cancel .anticon {
+  font-size: 16px;
+}
+/* 悬停其上：升级为实心红、放大，明确「松手即取消」 */
+.dept-tree-scope .dept-drag-cancel--over {
+  color: #fff;
+  border-style: solid;
+  border-color: var(--danger);
+  background: var(--danger);
+  transform: scale(1.03);
+  box-shadow: 0 6px 20px color-mix(in oklch, var(--danger) 45%, transparent);
+}
+@keyframes dept-cancel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

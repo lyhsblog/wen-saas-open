@@ -1,0 +1,25 @@
+# 文件编码统一 UTF-8
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{yml,yaml,json,md}]
+indent_size = 2
+
+[*.{xml,html}]
+indent_size = 4
+
+# Makefile 必须 tab
+[Makefile]
+indent_style = tab
+
+# CSV 例外（编码与 BOM 不强制约束，便于 Excel）
+[*.csv]
+charset = unset

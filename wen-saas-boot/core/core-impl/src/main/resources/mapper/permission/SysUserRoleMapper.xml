@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wensaas.core.impl.permission.role.SysUserRoleMapper">
+
+    <!-- 仅取存活用户：join sys_user 排除已软删用户，避免孤儿绑定（用户已删但 user_role 未清）混入 -->
+    <select id="listUserIdsByRole" resultType="long">
+        SELECT DISTINCT ur.user_id FROM sys_user_role ur
+        JOIN sys_user u ON u.id = ur.user_id AND u.tenant_id = ur.tenant_id
+        WHERE ur.tenant_id = #{tenantId}
+          AND ur.role_id = #{roleId}
+          AND u.deleted_at IS NULL
+        ORDER BY ur.user_id
+    </select>
+
+    <!-- 同上：成员数仅计存活用户，与成员列表口径一致，不被孤儿绑定虚增 -->
+    <select id="countByRole" resultType="int">
+        SELECT COUNT(*) FROM sys_user_role ur
+        JOIN sys_user u ON u.id = ur.user_id AND u.tenant_id = ur.tenant_id
+        WHERE ur.tenant_id = #{tenantId}
+          AND ur.role_id = #{roleId}
+          AND u.deleted_at IS NULL
+    </select>
+
+    <delete id="deleteByRoleAndUsers">
+        DELETE FROM sys_user_role
+        WHERE tenant_id = #{tenantId}
+          AND role_id = #{roleId}
+          AND user_id IN
+        <foreach collection="userIds" item="uid" open="(" separator="," close=")">
+            #{uid}
+        </foreach>
+    </delete>
+
+</mapper>

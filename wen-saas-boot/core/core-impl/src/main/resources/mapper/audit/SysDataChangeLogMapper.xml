@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wensaas.core.impl.audit.log.SysDataChangeLogMapper">
+
+    <!--
+      按 requestId 取 ③ 字段级变更。changes 以 ::text 取原始 jsonb 文本，
+      映射到 String 字段（避免 jsonb→Java 的类型处理器依赖）。
+      from/to 非空时收窄 created_at，触发分区裁剪。
+    -->
+    <select id="findByRequestId" resultType="com.wensaas.core.impl.audit.log.SysDataChangeLog">
+        SELECT id, request_id, actor_id, tenant_id, table_name, op, row_pk,
+               changes::text AS changes, created_at
+        FROM sys_data_change_log
+        WHERE request_id = #{requestId}
+        <if test="from != null"> AND created_at &gt;= #{from}</if>
+        <if test="to != null"> AND created_at &lt;= #{to}</if>
+        ORDER BY created_at, id
+    </select>
+
+</mapper>

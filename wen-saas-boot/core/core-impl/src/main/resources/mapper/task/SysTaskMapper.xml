@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wensaas.core.impl.task.SysTaskMapper">
+
+    <select id="countRunningByHandler" resultType="int">
+        SELECT COUNT(*)
+        FROM sys_task
+        WHERE tenant_id = #{tenantId}
+          AND handler_code = #{handlerCode}
+          AND status IN ('RUNNING', 'CANCELLING')
+    </select>
+
+    <resultMap id="SysTaskResultMap" type="com.wensaas.core.impl.task.SysTask" autoMapping="true">
+        <id column="id" property="id"/>
+        <result column="task_params" property="taskParams"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="result_data" property="resultData"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+    </resultMap>
+
+    <select id="selectByCreator" resultMap="SysTaskResultMap">
+        SELECT id, tenant_id, task_type, task_name, handler_code, task_params, status, progress,
+               total_count, processed_count, success_count, failed_count, result_data, error_message,
+               creator_id, created_at,
+               started_at, finished_at, expires_at
+        FROM sys_task
+        WHERE tenant_id = #{tenantId}
+          AND creator_id = #{creatorId}
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="selectMine" resultMap="SysTaskResultMap">
+        SELECT id, tenant_id, task_type, task_name, handler_code, task_params, status, progress,
+               total_count, processed_count, success_count, failed_count, result_data, error_message,
+               creator_id, created_at,
+               started_at, finished_at, expires_at
+        FROM sys_task
+        WHERE tenant_id = #{tenantId}
+          AND creator_id = #{creatorId}
+        <if test="status != null">AND status = #{status}</if>
+        <if test="type != null">AND task_type = #{type}</if>
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countMine" resultType="long">
+        SELECT COUNT(*)
+        FROM sys_task
+        WHERE tenant_id = #{tenantId}
+          AND creator_id = #{creatorId}
+        <if test="status != null">AND status = #{status}</if>
+        <if test="type != null">AND task_type = #{type}</if>
+    </select>
+
+    <select id="selectExpired" resultMap="SysTaskResultMap">
+        SELECT id, tenant_id, result_data
+        FROM sys_task
+        WHERE expires_at &lt; now()
+        ORDER BY id ASC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectPendingForRepublish" resultMap="SysTaskResultMap">
+        SELECT id, tenant_id, task_type, task_name, handler_code, task_params, status, progress,
+               total_count, processed_count, success_count, failed_count, result_data, error_message,
+               creator_id, created_at,
+               started_at, finished_at, expires_at
+        FROM sys_task
+        WHERE status = 'PENDING'
+          AND created_at &lt; #{before}
+        <if test="afterId != null">AND id &gt; #{afterId}</if>
+        ORDER BY id ASC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wensaas.core.impl.permission.org.SysDeptMapper">
+
+    <resultMap id="DeptResultMap" type="com.wensaas.core.impl.permission.org.SysDept">
+        <id     column="id"          property="id"/>
+        <result column="tenant_id"   property="tenantId"/>
+        <result column="parent_id"   property="parentId"/>
+        <result column="name"        property="name"/>
+        <result column="ancestors"   property="ancestors"/>
+        <result column="sort_order"  property="sortOrder"/>
+        <result column="status"      property="status"/>
+        <result column="created_at"  property="createdAt"/>
+        <result column="created_by"  property="createdBy"/>
+        <result column="updated_at"  property="updatedAt"/>
+        <result column="updated_by"  property="updatedBy"/>
+        <result column="deleted_at"  property="deletedAt"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        id, tenant_id, parent_id, name, ancestors, sort_order, status,
+        created_at, created_by, updated_at, updated_by, deleted_at
+    </sql>
+
+    <select id="listForTenant" resultMap="DeptResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM sys_dept
+        WHERE deleted_at IS NULL
+          AND tenant_id = #{tenantId}
+        ORDER BY parent_id, sort_order, name
+    </select>
+
+    <select id="countByNameAndParent" resultType="int">
+        SELECT COUNT(*) FROM sys_dept
+        WHERE deleted_at IS NULL
+          AND tenant_id = #{tenantId}
+          AND parent_id = #{parentId}
+          AND name = #{name}
+        <if test="selfId != null">
+          AND id &lt;&gt; #{selfId}
+        </if>
+    </select>
+
+    <select id="countChildren" resultType="int">
+        SELECT COUNT(*) FROM sys_dept
+        WHERE deleted_at IS NULL
+          AND tenant_id = #{tenantId}
+          AND parent_id = #{deptId}
+    </select>
+
+    <select id="countMembers" resultType="int">
+        SELECT COUNT(*) FROM sys_user_dept
+        WHERE tenant_id = #{tenantId}
+          AND dept_id = #{deptId}
+    </select>
+
+    <update id="updateAncestorsPrefix">
+        UPDATE sys_dept
+        SET ancestors = #{newPrefix} || SUBSTRING(ancestors FROM LENGTH(#{oldPrefix}) + 1),
+            updated_at = NOW()
+        WHERE deleted_at IS NULL
+          AND tenant_id = #{tenantId}
+          AND ancestors LIKE (#{oldPrefix} || '%')
+    </update>
+
+</mapper>

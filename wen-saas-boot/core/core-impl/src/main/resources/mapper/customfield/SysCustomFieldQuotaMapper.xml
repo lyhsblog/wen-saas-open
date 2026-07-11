@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wensaas.core.impl.customfield.quota.SysCustomFieldQuotaMapper">
+
+    <!--
+      原子额度增减：用 UPDATE 影响行数判断"是否超额"。
+      CHECK 约束在 DDL 已保证 used 不会越过 quota；这里再写 WHERE 是为 affectedRows = 0 时友好抛错。
+    -->
+    <update id="tryIncFieldUsed">
+        UPDATE sys_custom_field_quota
+           SET field_used = field_used + 1,
+               updated_at = CURRENT_TIMESTAMP
+         WHERE tenant_id = #{tenantId}
+           AND field_used &lt; field_quota
+    </update>
+
+    <update id="tryIncIndexUsed">
+        UPDATE sys_custom_field_quota
+           SET index_used = index_used + 1,
+               updated_at = CURRENT_TIMESTAMP
+         WHERE tenant_id = #{tenantId}
+           AND index_used &lt; index_quota
+    </update>
+
+    <update id="decFieldUsed">
+        UPDATE sys_custom_field_quota
+           SET field_used = field_used - 1,
+               updated_at = CURRENT_TIMESTAMP
+         WHERE tenant_id = #{tenantId}
+           AND field_used &gt; 0
+    </update>
+
+    <update id="decIndexUsed">
+        UPDATE sys_custom_field_quota
+           SET index_used = index_used - 1,
+               updated_at = CURRENT_TIMESTAMP
+         WHERE tenant_id = #{tenantId}
+           AND index_used &gt; 0
+    </update>
+
+</mapper>

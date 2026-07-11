@@ -1,0 +1,325 @@
+/* Wen-Admin Design Tokens */
+:root {
+  /* Brand */
+  --brand: #2b5fff;
+  --brand-hover: #1f4de0;
+  --brand-active: #1a3fb8;
+  --brand-bg: #eef3ff;
+  --brand-bg-strong: #dce5ff;
+
+  /* Semantic */
+  --success: #16a34a;
+  --success-bg: #ecfdf3;
+  --warning: #d97706;
+  --warning-bg: #fff7ed;
+  --danger: #dc2626;
+  --danger-bg: #fef2f2;
+  --info: #2563eb;
+  --info-bg: #eff6ff;
+
+  /* Auxiliary（图表 / 头像等辅助色，非品牌族、不随 data-brand 变） */
+  --purple: #7c3aed;
+  --purple-bg: #f2ecfd;
+  --cyan: #0e9ca6;
+  --magenta: #db2777;
+  --gold: #facc15;
+
+  /* Neutrals — cool grey */
+  --bg: #f5f7fa;
+  --bg-elev: #ffffff;
+  --bg-muted: #f8fafc;
+  --border: #e5e8ee;
+  --border-strong: #d4d8e0;
+  --divider: #eef0f4;
+
+  /* Text */
+  --text: #1a1f2e;
+  --text-secondary: #4b5365;
+  --text-tertiary: #6b7280;
+  --text-disabled: #b5bac6;
+  --text-inverse: #ffffff;
+
+  /* Ops dark sidebar */
+  --ops-side-bg: #1a1f2e;
+  --ops-side-bg-2: #232a3d;
+  --ops-side-text: #c8ccd7;
+  --ops-side-text-active: #ffffff;
+  --ops-side-active-bg: rgba(43, 95, 255, 0.18);
+  --ops-side-hover-bg: rgba(255, 255, 255, 0.04);
+  --ops-side-divider: rgba(255, 255, 255, 0.06);
+
+  /* Tenant light sidebar */
+  --tn-side-bg: #ffffff;
+  --tn-side-text: #4b5365;
+  --tn-side-text-active: var(--brand);
+  --tn-side-active-bg: var(--brand-bg);
+  --tn-side-hover-bg: #f1f4f9;
+
+  /* Radii */
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --r-xl: 12px;
+  --r-pill: 999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 1px rgba(15, 23, 42, 0.03);
+  --shadow-md: 0 2px 8px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.1), 0 2px 4px rgba(15, 23, 42, 0.04);
+  --shadow-pop: 0 12px 32px rgba(15, 23, 42, 0.16);
+
+  /* Density (default = standard) */
+  --density-row: 44px;
+  --density-cell-px: 12px;
+  --density-cell-py: 10px;
+  --density-card-pad: 20px;
+  --density-section-gap: 20px;
+  --font-base: 14px;
+  --font-sm: 13px;
+  --font-xs: 12px;
+  --font-md: 15px;
+  --font-lg: 16px;
+  --font-xl: 18px;
+  --font-2xl: 22px;
+  --font-3xl: 28px;
+
+  /* Type */
+  --font-family:
+    'PingFang SC', 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Microsoft YaHei',
+    sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+}
+
+/* Density variants
+   注意：compact 的 --density-row: 36px 低于 44px 最小触控目标——密度开关若上线
+   只进 PC 两端，h5 永远锁 standard（h5 样式不引密度变体、applyDensity 不进 h5 bundle）。
+   另见 density.ts 顶部注释：AntD 不读 CSS 变量，上开关必须与 ConfigProvider
+   componentSize 双链路同调。 */
+[data-density='compact'] {
+  --density-row: 36px;
+  --density-cell-px: 10px;
+  --density-cell-py: 6px;
+  --density-card-pad: 14px;
+  --density-section-gap: 14px;
+  --font-base: 13px;
+  --font-sm: 12px;
+  --font-xs: 11px;
+}
+[data-density='loose'] {
+  --density-row: 52px;
+  --density-cell-px: 16px;
+  --density-cell-py: 14px;
+  --density-card-pad: 28px;
+  --density-section-gap: 28px;
+  --font-base: 15px;
+  --font-sm: 14px;
+  --font-xs: 13px;
+}
+
+/* Sharp radius variant */
+[data-radius='sharp'] {
+  --r-sm: 2px;
+  --r-md: 2px;
+  --r-lg: 3px;
+  --r-xl: 4px;
+}
+
+/* Brand color variants — set on root */
+[data-brand='indigo'] {
+  --brand: #5b5bd6;
+  --brand-hover: #4949c4;
+  --brand-active: #3e3eab;
+  --brand-bg: #eeeefd;
+  --brand-bg-strong: #ddddfb;
+  --ops-side-active-bg: rgba(91, 91, 214, 0.2);
+}
+[data-brand='teal'] {
+  --brand: #0e7c66;
+  --brand-hover: #0b6555;
+  --brand-active: #084e42;
+  --brand-bg: #e6f5f1;
+  --brand-bg-strong: #c9eae0;
+  --ops-side-active-bg: rgba(14, 124, 102, 0.22);
+}
+[data-brand='slate'] {
+  --brand: #1f2937;
+  --brand-hover: #111827;
+  --brand-active: #030712;
+  --brand-bg: #f1f5f9;
+  --brand-bg-strong: #e2e8f0;
+  --ops-side-active-bg: rgba(31, 41, 55, 0.3);
+}
+[data-brand='ant'] {
+  --brand: #1677ff;
+  --brand-hover: #0958d9;
+  --brand-active: #003eb3;
+  --brand-bg: #e6f4ff;
+  --brand-bg-strong: #bae0ff;
+  --ops-side-active-bg: rgba(22, 119, 255, 0.2);
+}
+
+/* Font variants */
+[data-font='harmony'] {
+  --font-family: 'HarmonyOS Sans SC', 'PingFang SC', 'Inter', sans-serif;
+}
+[data-font='system'] {
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+}
+[data-font='source'] {
+  --font-family: 'Source Han Sans SC', 'Noto Sans SC', 'Inter', sans-serif;
+}
+
+/* Base */
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+body {
+  min-width: 1280px;
+}
+/* 免登录公开页（分享下载 / 重置密码）常被手机打开：豁免 PC 最小宽，由页面自身响应式 */
+body.public-page {
+  min-width: 0;
+}
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-base);
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+* {
+  box-sizing: border-box;
+}
+a {
+  color: var(--brand);
+  text-decoration: none;
+}
+button {
+  font-family: inherit;
+}
+/* 键盘焦点全局兜底：零散自绘交互元素（登录页输入等）统一可见焦点环。
+   :focus-visible 仅键盘导航触发，不干扰鼠标点击；AntD 组件自带 focus 态
+   特异性更高，各自的样式优先生效。 */
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* 系统开启「减少动态效果」时整体降级：时长归零但保留状态变化（AntD 动画走 CSS，同样被覆盖）。 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* === Components ===
+   wa-* 类名录（全集，新增 wa-* 类需评审）：交互控件一律走 AntD（wa-btn / wa-input /
+   wa-select / wa-badge 等交互与徽章类已随迁移删除，eslint 有卡口），这里只保留
+   纯布局/排版工具类：
+   - 结构：wa-card（--flush / -head / -title / -actions）
+   - 排版：wa-stat-label / wa-muted / wa-truncate / wa-spacer
+   - 滚动：wa-scrollbar-thin */
+
+/* Card */
+.wa-card {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--density-card-pad);
+}
+.wa-card--flush {
+  padding: 0;
+}
+.wa-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--divider);
+}
+.wa-card-title {
+  font-size: var(--font-md);
+  font-weight: 600;
+  color: var(--text);
+}
+.wa-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Stat */
+.wa-stat-label {
+  font-size: var(--font-sm);
+  color: var(--text-tertiary);
+  margin-bottom: 6px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+/* 细滚动条（页签条等紧凑滚动区）：4px、默认透明、悬停容器才显色 */
+.wa-scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.wa-scrollbar-thin::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 2px;
+}
+.wa-scrollbar-thin:hover::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+}
+.wa-scrollbar-thin:hover::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+/* Utility */
+.wa-spacer {
+  flex: 1;
+}
+.wa-muted {
+  color: var(--text-tertiary);
+}
+.wa-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 列表关键标识列一键复制（shared-ui CopyableText）：复制图标默认隐藏，
+   悬停所在行 / 单元格或聚焦时显现，避免密集表格里每行常驻图标的噪点。 */
+.copyable-cell .ant-typography-copy {
+  opacity: 0;
+  margin-inline-start: 4px;
+  transition: opacity 0.15s;
+}
+.copyable-cell:hover .ant-typography-copy,
+.copyable-cell .ant-typography-copy:focus-visible,
+.ant-table-row:hover .copyable-cell .ant-typography-copy,
+tr:hover .copyable-cell .ant-typography-copy {
+  opacity: 1;
+}
+/* 复制成功的勾在隐藏期间也保持可见，确保点完图标能看到反馈。 */
+.copyable-cell .ant-typography-copy-success {
+  opacity: 1;
+}

@@ -1,0 +1,54 @@
+# IDE
+/.idea/
+*.iml
+.vscode/
+.eclipse/
+.settings/
+.classpath
+.project
+
+# Claude Code 本地配置
+/.claude/
+
+# Maven 构建产物
+target/
+build/
+out/
+*.class
+
+# 本地运行时数据（LocalFileStorageAdapter 默认根目录等）
+/data/
+
+# JAR / WAR / 日志
+*.jar
+*.war
+*.ear
+*.log
+logs/
+
+# Spring Boot
+*.original
+HELP.md
+
+# 操作系统
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 敏感配置（不入 git）
+application-local.yml
+application-secret.yml
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+
+# 部署脚本（含服务器路径/端口等环境细节，随环境不同，不入 git；模板见 .env.example 配套说明）
+service.sh
+
+# 临时与备份
+*.tmp
+*.bak
+*.swp
+*~

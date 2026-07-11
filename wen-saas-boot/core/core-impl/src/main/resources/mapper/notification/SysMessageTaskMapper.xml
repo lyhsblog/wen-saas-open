@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wensaas.core.impl.notification.delivery.SysMessageTaskMapper">
+
+    <insert id="insertBatch">
+        INSERT INTO sys_message_task (
+            id, tenant_id, task_id, template_code, recipient_id, channel, priority,
+            rendered_title, rendered_body, related_type, related_id, link,
+            status, retry_count, created_at, updated_at
+        ) VALUES
+        <foreach collection="list" item="e" separator=",">
+            (
+            #{e.id}, #{e.tenantId}, #{e.taskId}, #{e.templateCode}, #{e.recipientId}, #{e.channel}, #{e.priority},
+            #{e.renderedTitle}, #{e.renderedBody}, #{e.relatedType}, #{e.relatedId}, #{e.link},
+            #{e.status}, #{e.retryCount}, #{e.createdAt}, #{e.updatedAt}
+            )
+        </foreach>
+    </insert>
+
+    <select id="selectByTaskId" resultType="com.wensaas.core.impl.notification.delivery.SysMessageTask">
+        SELECT
+            id, tenant_id, task_id, template_code, recipient_id, channel, priority,
+            rendered_title, rendered_body, related_type, related_id, link,
+            status, retry_count, error_reason, sent_at, created_at, updated_at
+        FROM sys_message_task
+        WHERE task_id = #{taskId}
+        ORDER BY created_at, id
+    </select>
+
+    <update id="markSent">
+        UPDATE sys_message_task
+           SET status = 'SENT',
+               retry_count = #{retryCount},
+               sent_at = #{sentAt},
+               error_reason = NULL,
+               updated_at = now()
+         WHERE id = #{id}
+    </update>
+
+    <update id="markFailed">
+        UPDATE sys_message_task
+           SET status = <choose><when test="terminal">'FAILED'</when><otherwise>'PENDING'</otherwise></choose>,
+               retry_count = #{retryCount},
+               error_reason = #{errorReason},
+               updated_at = now()
+         WHERE id = #{id}
+    </update>
+
+    <update id="markSkipped">
+        UPDATE sys_message_task
+           SET status = 'SKIPPED',
+               error_reason = #{errorReason},
+               updated_at = now()
+         WHERE id = #{id}
+    </update>
+
+</mapper>

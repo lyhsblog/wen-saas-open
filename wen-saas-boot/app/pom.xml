@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.wensaas</groupId>
+        <artifactId>wen-saas-boot</artifactId>
+        <version>0.9.0</version>
+    </parent>
+
+    <artifactId>wen-saas-boot-app</artifactId>
+    <name>${project.artifactId}</name>
+    <description>启动器：app 的 pom 决定本次部署包含哪些业务模块</description>
+
+    <dependencies>
+        <!-- 底座 Web 层（间接拉入 core-impl / core-api） -->
+        <dependency>
+            <groupId>com.wensaas</groupId>
+            <artifactId>wen-saas-boot-core-web</artifactId>
+        </dependency>
+
+        <!-- Prometheus 指标 registry：让 application.yml 暴露的 /actuator/prometheus 真正可用
+             （架构审查 H4：原先暴露了端点但缺该依赖 → 404）。版本由 Spring Boot BOM 托管。 -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <!-- 业务模块 -->
+        <dependency>
+            <groupId>com.wensaas</groupId>
+            <artifactId>wen-saas-boot-module-crm-demo</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>wen-saas-boot-app</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>com.wensaas.app.WenSaasBootApplication</mainClass>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <!-- build-info 生成 META-INF/build-info.properties → BuildProperties bean（启动横幅取版本号，同时喂 /actuator/info） -->
+                            <goal>build-info</goal>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

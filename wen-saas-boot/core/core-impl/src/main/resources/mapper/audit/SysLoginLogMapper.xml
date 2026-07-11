@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wensaas.core.impl.audit.log.SysLoginLogMapper">
+
+    <insert id="insertBatch">
+        INSERT INTO sys_login_log
+        (id, tenant_id, request_id, operator_id, operator_name, operator_dept_id,
+         account, login_method, action, result, fail_reason, ip, user_agent, created_at)
+        VALUES
+        <foreach collection="list" item="it" separator=",">
+            (#{it.id}, #{it.tenantId}, #{it.requestId},
+             #{it.operatorId}, #{it.operatorName}, #{it.operatorDeptId},
+             #{it.account}, #{it.loginMethod}, #{it.action}, #{it.result}, #{it.failReason},
+             #{it.ip}, #{it.userAgent}, #{it.createdAt})
+        </foreach>
+    </insert>
+
+</mapper>

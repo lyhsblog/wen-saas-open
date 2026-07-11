@@ -1,0 +1,16 @@
+{
+  "name": "@wen-saas/base-module",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "@wen-saas/module-runtime": "workspace:*"
+  }
+}

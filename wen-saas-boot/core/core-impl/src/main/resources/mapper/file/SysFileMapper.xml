@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wensaas.core.impl.file.SysFileMapper">
+
+    <sql id="allColumns">
+        id, tenant_id, file_id, file_name, mime_type, size_bytes, visibility,
+        owner_module, owner_ref_type, owner_ref_id, folder_path, space, folder_id,
+        backend_type, backend_config_id, backend_object_key,
+        upload_state, uploaded_by, uploaded_at,
+        created_at, created_by, updated_at, updated_by, deleted_at
+    </sql>
+
+    <select id="selectByFileId" resultType="com.wensaas.core.impl.file.SysFile">
+        SELECT <include refid="allColumns"/>
+        FROM sys_file
+        WHERE file_id = #{fileId}
+          AND deleted_at IS NULL
+        LIMIT 1
+    </select>
+
+    <select id="selectByOwner" resultType="com.wensaas.core.impl.file.SysFile">
+        SELECT <include refid="allColumns"/>
+        FROM sys_file
+        WHERE tenant_id = #{tenantId}
+          AND owner_module = #{ownerModule}
+          AND owner_ref_type = #{ownerRefType}
+          AND owner_ref_id = #{ownerRefId}
+          AND deleted_at IS NULL
+        ORDER BY uploaded_at DESC
+    </select>
+
+    <select id="selectSoftDeletedBefore" resultType="com.wensaas.core.impl.file.SysFile">
+        SELECT <include refid="allColumns"/>
+        FROM sys_file
+        WHERE deleted_at IS NOT NULL
+          AND deleted_at &lt; #{threshold}
+        ORDER BY deleted_at ASC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectUploadingOrphans" resultType="com.wensaas.core.impl.file.SysFile">
+        SELECT <include refid="allColumns"/>
+        FROM sys_file
+        WHERE upload_state = 'uploading'
+          AND uploaded_at &lt; #{threshold}
+          AND deleted_at IS NULL
+        ORDER BY uploaded_at ASC
+        LIMIT #{limit}
+    </select>
+
+    <delete id="physicalDelete">
+        DELETE FROM sys_file WHERE id = #{id}
+    </delete>
+
+    <!-- ===================== 文件中心（V1.34.0） ===================== -->
+
+    <select id="selectCenterPage" resultType="com.wensaas.core.impl.file.SysFile">
+        SELECT <include refid="allColumns"/>
+        FROM sys_file
+        WHERE visibility = 'file-center'
+          AND space = #{space}
+          AND deleted_at IS NULL
+          AND upload_state = 'active'
+        <choose>
+            <when test="folderId == null">AND folder_id IS NULL</when>
+            <otherwise>AND folder_id = #{folderId}</otherwise>
+        </choose>
+        <if test="uploadedBy != null">AND uploaded_by = #{uploadedBy}</if>
+        <if test="keyword != null and keyword != ''">AND file_name ILIKE '%' || #{keyword} || '%'</if>
+        ORDER BY uploaded_at DESC
+    </select>
+
+    <select id="selectFileNamesInFolder" resultType="java.lang.String">
+        SELECT file_name
+        FROM sys_file
+        WHERE visibility = 'file-center'
+          AND space = #{space}
+          AND deleted_at IS NULL
+        <choose>
+            <when test="folderId == null">AND folder_id IS NULL</when>
+            <otherwise>AND folder_id = #{folderId}</otherwise>
+        </choose>
+        <if test="uploadedBy != null">AND uploaded_by = #{uploadedBy}</if>
+    </select>
+
+    <select id="selectRecycledFiles" resultType="com.wensaas.core.impl.file.SysFile">
+        SELECT <include refid="allColumns"/>
+        FROM sys_file f
+        WHERE f.visibility = 'file-center'
+          AND f.space = #{space}
+          AND f.deleted_at IS NOT NULL
+        <if test="uploadedBy != null">AND f.uploaded_by = #{uploadedBy}</if>
+          AND (f.folder_id IS NULL
+               OR NOT EXISTS (SELECT 1 FROM sys_file_folder d
+                              WHERE d.id = f.folder_id AND d.deleted_at IS NOT NULL))
+        ORDER BY f.deleted_at DESC
+    </select>
+
+    <select id="selectByFileIdIncludeDeleted" resultType="com.wensaas.core.impl.file.SysFile">
+        SELECT <include refid="allColumns"/>
+        FROM sys_file
+        WHERE file_id = #{fileId}
+        LIMIT 1
+    </select>
+
+    <select id="selectActiveFileIdsByFolderIds" resultType="java.lang.Long">
+        SELECT id FROM sys_file
+        WHERE deleted_at IS NULL AND folder_id IN
+        <foreach collection="folderIds" item="i" open="(" separator="," close=")">#{i}</foreach>
+    </select>
+
+    <select id="selectDeletedFilesByFolderIds" resultType="com.wensaas.core.impl.file.SysFile">
+        SELECT <include refid="allColumns"/>
+        FROM sys_file
+        WHERE deleted_at IS NOT NULL AND folder_id IN
+        <foreach collection="folderIds" item="i" open="(" separator="," close=")">#{i}</foreach>
+    </select>
+
+    <update id="bindCenterAttrs">
+        UPDATE sys_file SET space = #{space}, folder_id = #{folderId}, updated_at = now()
+        WHERE file_id = #{fileId} AND deleted_at IS NULL
+    </update>
+
+    <update id="updateCenterAttrs">
+        UPDATE sys_file
+           SET space = #{space}, folder_id = #{folderId}, file_name = #{fileName}, updated_at = now()
+        WHERE file_id = #{fileId} AND deleted_at IS NULL
+    </update>
+
+    <update id="softDeleteByIds">
+        UPDATE sys_file SET deleted_at = now()
+        WHERE deleted_at IS NULL AND id IN
+        <foreach collection="ids" item="i" open="(" separator="," close=")">#{i}</foreach>
+    </update>
+
+    <update id="restoreFile">
+        UPDATE sys_file SET deleted_at = NULL, folder_id = #{folderId}, updated_at = now()
+        WHERE id = #{id} AND deleted_at IS NOT NULL
+    </update>
+
+    <update id="restoreFilesByFolderIds">
+        UPDATE sys_file SET deleted_at = NULL
+        WHERE deleted_at IS NOT NULL AND folder_id IN
+        <foreach collection="folderIds" item="i" open="(" separator="," close=")">#{i}</foreach>
+    </update>
+
+    <select id="sumActiveSize" resultType="long">
+        SELECT COALESCE(SUM(size_bytes), 0)
+        FROM sys_file
+        WHERE deleted_at IS NULL AND upload_state = 'active'
+    </select>
+
+    <select id="selectRecycleBinAgg" resultType="com.wensaas.core.impl.file.RecycleBinAgg">
+        SELECT
+            COUNT(*)                                                                  AS file_count,
+            COALESCE(SUM(size_bytes), 0)                                              AS total_bytes,
+            COUNT(*) FILTER (WHERE deleted_at &lt; #{expiringThreshold}
+                               AND deleted_at &gt;= #{overdueThreshold})              AS expiring_soon_count,
+            COUNT(*) FILTER (WHERE deleted_at &lt; #{overdueThreshold})               AS overdue_count
+        FROM sys_file
+        WHERE deleted_at IS NOT NULL
+    </select>
+
+</mapper>

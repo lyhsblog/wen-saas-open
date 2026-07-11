@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wensaas.core.impl.openapi.calllog.SysApiCallLogMapper">
+
+    <insert id="insertBatch">
+        INSERT INTO sys_api_call_log (
+            id, tenant_id, api_key_id, api_key_name, request_id,
+            method, path, status_code, duration_ms,
+            request_size, response_size, error_message,
+            ip, user_agent, module_code, created_at
+        ) VALUES
+        <foreach collection="list" item="e" separator=",">
+            (
+            #{e.id}, #{e.tenantId}, #{e.apiKeyId}, #{e.apiKeyName}, #{e.requestId},
+            #{e.method}, #{e.path}, #{e.statusCode}, #{e.durationMs},
+            #{e.requestSize}, #{e.responseSize}, #{e.errorMessage},
+            #{e.ip}, #{e.userAgent}, #{e.moduleCode}, #{e.createdAt}
+            )
+        </foreach>
+    </insert>
+
+</mapper>

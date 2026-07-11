@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wensaas.core.impl.customfield.def.SysCustomFieldDefMapper">
+
+    <resultMap id="CustomFieldDefResultMap" type="com.wensaas.core.impl.customfield.def.SysCustomFieldDef">
+        <id     column="id"               property="id"/>
+        <result column="tenant_id"        property="tenantId"/>
+        <result column="object_code"      property="objectCode"/>
+        <result column="field_code"       property="fieldCode"/>
+        <result column="field_name"       property="fieldName"/>
+        <result column="field_type"       property="fieldType"/>
+        <result column="is_required"      property="isRequired"/>
+        <result column="is_indexed"       property="isIndexed"/>
+        <result column="default_value"    property="defaultValue"/>
+        <result column="ref_dict_code"    property="refDictCode"/>
+        <result column="ref_object_code"  property="refObjectCode"/>
+        <result column="display_order"    property="displayOrder"/>
+        <result column="created_at"       property="createdAt"/>
+        <result column="created_by"       property="createdBy"/>
+        <result column="updated_at"       property="updatedAt"/>
+        <result column="updated_by"       property="updatedBy"/>
+        <result column="deleted_at"       property="deletedAt"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        id, tenant_id, object_code, field_code, field_name, field_type,
+        is_required, is_indexed, default_value, ref_dict_code, ref_object_code,
+        display_order, created_at, created_by, updated_at, updated_by, deleted_at
+    </sql>
+
+    <select id="listByTenantAndObject" resultMap="CustomFieldDefResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM sys_custom_field_def
+        WHERE deleted_at IS NULL
+          AND tenant_id = #{tenantId}
+          AND object_code = #{objectCode}
+        ORDER BY display_order ASC, id ASC
+    </select>
+
+    <select id="findByTenantObjectAndCode" resultMap="CustomFieldDefResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM sys_custom_field_def
+        WHERE deleted_at IS NULL
+          AND tenant_id = #{tenantId}
+          AND object_code = #{objectCode}
+          AND field_code = #{fieldCode}
+        LIMIT 1
+    </select>
+
+    <!-- 跨租户判活（架构审查 M13）：故意不带 tenant_id，调用方旁路 TenantLine。 -->
+    <select id="countOtherIndexedPeers" resultType="long">
+        SELECT COUNT(*)
+        FROM sys_custom_field_def
+        WHERE deleted_at IS NULL
+          AND is_indexed = TRUE
+          AND object_code = #{objectCode}
+          AND field_code = #{fieldCode}
+          AND id &lt;&gt; #{excludeFieldId}
+    </select>
+
+</mapper>

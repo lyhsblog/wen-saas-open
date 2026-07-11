@@ -1,0 +1,120 @@
+# core-web 模块测试用配置（PG + Redis + Web 容器）
+
+spring:
+  application:
+    name: wen-saas-boot-core-web-test
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/wen_saas
+    username: postgres
+    password: root
+    driver-class-name: org.postgresql.Driver
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      password: root
+      database: 0
+      timeout: 3000ms
+  flyway:
+    enabled: true
+    locations: classpath:db/migration/core
+    baseline-on-migrate: true
+    validate-on-migrate: false
+  mvc:
+    problemdetails:
+      enabled: true
+
+# 本机 Docker RocketMQ（v5 gRPC 客户端走 Proxy，与 application-dev.yml 同口径）
+rocketmq:
+  producer:
+    endpoints: 127.0.0.1:8081
+    # 自建 Proxy 为明文 gRPC，关 TLS
+    ssl-enabled: false
+  push-consumer:
+    endpoints: 127.0.0.1:8081
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+wen-saas-boot:
+  # 测试上下文只发不收：关掉全部 @RocketMQMessageListener 消费者装配（producer 链路保留）。
+  # 原因：每个缓存 Spring 上下文起 10 个真实 push consumer，既拖慢每类启动（~3 分钟），
+  # 全量跑到后段还会因 160+ 活消费者挤占 topic 路由导致假失败。
+  mq:
+    consumers-enabled: false
+  # 测试不装配定时任务（部分 Job 依赖 MQ Publisher 等测试上下文没有的 Bean）
+  jobs:
+    enabled: false
+  tenant:
+    platform-only-tables:
+      - sys_tenant
+      - sys_business_module
+      - sys_menu
+      - sys_package
+      - sys_package_module
+      - sys_recommended_role_template
+      - sys_recommended_role_template_package
+      - sys_recommended_role_template_permission
+      - sys_recommended_role_template_activation
+      - flyway_schema_history
+      - sys_password_reset_token
+      - sys_tenant_seat_addon
+      - sys_setting
+      - sys_tenant_health
+      - sys_tenant_route_alias
+      - sys_audit_table_config
+      - sys_mq_dead_letter
+  auth:
+    jwt-secret: test-only-secret-please-do-not-use-in-prod-32bytes!
+    issuer: wen-saas-boot
+    token-ttl: 2h
+    reset-token-ttl: 48h
+    permit-all:
+      - /api/auth/login
+      - /actuator/health
+      - /actuator/health/**
+      - /actuator/info
+      - /api/v1/openapi/**
+      - /api/v1/public/**
+    allow-tenant-id-header: false
+  # 通知模块；core-web 启动期装配（broker 已通后真实端到端）
+  notification:
+    enabled: true
+    email-noop: true
+  # 文件存储；测试环境走 LocalAdapter（无 OSS 依赖）
+  file:
+    enabled: true
+    encryption-keys:
+      default: dGVzdC1hZXMta2V5LWZvci11bml0LW9ubHktMzJieSE=
+    active-key-id: default
+    max-size: 100MB
+    download-url-ttl: 4m
+    signed-url-ttl: 5m
+    platform-default-backend: local
+    local:
+      root: ./build/core-web-test-files
+  # 开放 API / 事件总线 / Webhook；core-web 启动期装配（broker 已通后真实端到端）
+  openapi:
+    enabled: true
+    path-prefix: /api/v1/openapi
+    rate-limit:
+      enabled: true
+      default-limit: 1000
+      window: 60s
+  event:
+    enabled: true
+    topic: wen_event
+  webhook:
+    enabled: true
+    send-topic: wen_webhook_send
+
+logging:
+  level:
+    root: WARN
+    com.wensaas: INFO

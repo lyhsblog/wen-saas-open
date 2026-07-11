@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.wensaas</groupId>
+    <artifactId>wen-saas-boot</artifactId>
+    <version>0.9.0</version>
+    <packaging>pom</packaging>
+
+    <name>Wen SaaS Boot</name>
+    <description>多租户 SaaS 管理后台基础底座（Wen SaaS Boot）</description>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+        </license>
+    </licenses>
+
+    <modules>
+        <module>core</module>
+        <module>modules</module>
+        <module>app</module>
+    </modules>
+
+    <properties>
+        <!-- 编译 / 编码 -->
+        <java.version>25</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <maven.compiler.release>${java.version}</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!--
+          关键依赖版本。
+          文档约定为"当时最新稳定版"，本次以 2026-05 时点的稳定版校准。
+          PostgreSQL JDBC / Flyway 等由 Spring Boot BOM 托管，不在此显式声明。
+        -->
+        <spring-boot.version>4.0.6</spring-boot.version>
+        <mybatis-plus.version>3.5.16</mybatis-plus.version>
+        <fastjson2.version>2.0.53</fastjson2.version>
+        <rocketmq-spring.version>2.3.6</rocketmq-spring.version>
+        <!-- gRPC 客户端单独锁版：starter 2.3.6 传递的是 5.0.7，其 telemetry stream 与较新 Proxy 握手会
+             报 "Stream is already completed"；升到 5.2.0（client-java 最新线）修复，向后兼容 5.x broker。 -->
+        <rocketmq-client-java.version>5.2.0</rocketmq-client-java.version>
+        <!-- 分布式协调（架构审查 M1：统一 Redis 锁 + 去重基建）。
+             redisson-spring-boot-starter 4.4.0 针对 Spring Boot 4.0.6 构建，作为唯一 Redis 工厂
+             替换 Lettuce（透传 spring-data-redis + redisson-spring-data，StringRedisTemplate 不变）。 -->
+        <redisson.version>4.4.0</redisson.version>
+        <jjwt.version>0.12.6</jjwt.version>
+        <aliyun-sdk-oss.version>3.18.1</aliyun-sdk-oss.version>
+        <aliyun-dysmsapi.version>3.0.0</aliyun-dysmsapi.version>
+        <tencent-cos.version>5.6.269</tencent-cos.version>
+        <totp.version>1.7.1</totp.version>
+        <springdoc.version>3.0.3</springdoc.version>
+        <poi.version>5.5.1</poi.version>
+        <!-- Lombok：响应 DTO 可变 POJO 化。1.18.46 支持 JDK 25。 -->
+        <lombok.version>1.18.46</lombok.version>
+
+        <!-- Maven 插件 -->
+        <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>3.5.0</maven-surefire-plugin.version>
+        <maven-jar-plugin.version>3.4.2</maven-jar-plugin.version>
+        <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
+        <!-- 覆盖率（架构审查 H5）。0.8.14+ 起官方支持 JDK 25；0.8.15 为 Maven Central 最新正式版
+             （0.8.16 仅为开发快照、未发布，故不用）。 -->
+        <jacoco.version>0.8.15</jacoco.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Spring Boot BOM -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Lombok（编译期注解处理 + provided 依赖） -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- 内部模块互相引用 -->
+            <dependency>
+                <groupId>com.wensaas</groupId>
+                <artifactId>wen-saas-boot-core-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wensaas</groupId>
+                <artifactId>wen-saas-boot-core-impl</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wensaas</groupId>
+                <artifactId>wen-saas-boot-core-web</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- 持久化（Spring Boot 4 适配的 mybatis-plus starter） -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-spring-boot4-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+
+            <!-- 通用 JSON -->
+            <dependency>
+                <groupId>com.alibaba.fastjson2</groupId>
+                <artifactId>fastjson2</artifactId>
+                <version>${fastjson2.version}</version>
+            </dependency>
+
+            <!-- 消息 / 调度 -->
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-v5-client-spring-boot-starter</artifactId>
+                <version>${rocketmq-spring.version}</version>
+            </dependency>
+            <!-- 覆盖 starter 传递的 5.0.7：与 Proxy telemetry 握手必须用 5.1.0+ 客户端 -->
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-client-java</artifactId>
+                <version>${rocketmq-client-java.version}</version>
+            </dependency>
+            <!-- Redis 客户端 + 分布式协调（锁 / 限流 / 对象）。作为唯一 Redis 工厂替换 Lettuce：
+                 starter 传递 spring-boot-starter-data-redis（含 lettuce-core），在 core-impl 实际依赖处
+                 排除 io.lettuce:lettuce-core，使 RedissonConnectionFactory 成为唯一 RedisConnectionFactory。 -->
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson-spring-boot-starter</artifactId>
+                <version>${redisson.version}</version>
+            </dependency>
+
+            <!--
+                API 文档。
+                springdoc-openapi 3.0.3 原生支持 Spring Boot 4 / Spring Framework 7。
+                选 starter-webmvc-api（无 Swagger UI）：前端 AI 工具链消费 /v3/api-docs JSON 即可，
+                不需要给人看的交互界面，省一个 webjars / swagger-ui 子依赖。
+                Knife4j 不再引（与 SB4 永久不兼容）。
+            -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+
+            <!-- JWT（认证与会话） -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+
+            <!-- 阿里云 OSS SDK（文件存储抽象层 v1） -->
+            <dependency>
+                <groupId>com.aliyun.oss</groupId>
+                <artifactId>aliyun-sdk-oss</artifactId>
+                <version>${aliyun-sdk-oss.version}</version>
+            </dependency>
+
+            <!-- 腾讯云 COS SDK（文件存储抽象层 TencentCosFileStorageAdapter） -->
+            <dependency>
+                <groupId>com.qcloud</groupId>
+                <artifactId>cos_api</artifactId>
+                <version>${tencent-cos.version}</version>
+            </dependency>
+
+            <!-- 阿里云短信 SDK（SMS 通道 SmsChannelAdapter）。凭据未就绪时 noop 不真发 -->
+            <dependency>
+                <groupId>com.aliyun</groupId>
+                <artifactId>dysmsapi20170525</artifactId>
+                <version>${aliyun-dysmsapi.version}</version>
+            </dependency>
+
+            <!-- TOTP（运营 MFA Authenticator 通道） -->
+            <dependency>
+                <groupId>dev.samstevens.totp</groupId>
+                <artifactId>totp</artifactId>
+                <version>${totp.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven-compiler-plugin.version}</version>
+                    <configuration>
+                        <release>${java.version}</release>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                        <parameters>true</parameters>
+                        <!-- Lombok 注解处理器。当前全仓仅 lombok 一个处理器，
+                             显式声明 path 后由各模块按需 provided 引入 lombok 注解即可生效。 -->
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${maven-surefire-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${maven-jar-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>${maven-resources-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring-boot.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <!--
+          覆盖率插桩对所有子模块生效（架构审查 H5）：
+          · prepare-agent —— 注入 jacoco agent（设置 surefire argLine）
+          · report（test 阶段）—— 每次跑测试后生成 target/site/jacoco 报告
+          · check（verify 阶段）—— 覆盖率门禁；阈值先设 0（仅打通管道、不阻断），
+            因 app / module 暂无测试，非 0 门禁会误伤；待 Testcontainers 落地、集成测试能在
+            CI 跑出真实数字后，再按模块把 minimum 逐步提到 0.70 / 核心 0.80。
+            check 绑 verify、不影响日常 `mvn test`。
+        -->
+        <plugins>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>jacoco-prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>jacoco-report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>jacoco-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.00</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

@@ -1,0 +1,12 @@
+node_modules/
+dist/
+dist-frontend.tar.gz
+coverage/
+.cache/
+.pnpm-store/
+*.local
+
+# Playwright E2E
+playwright-report/
+test-results/
+.playwright/

@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- favicon 恒用品牌蓝，不随租户主题色（浏览器对 favicon 缓存极强，动态换色不做） -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <title>Wen SaaS Boot · 租户后台</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <!-- page-agent Demo CDN，使用官方免费测试 API，无需自备 key -->
+    <script
+      src="https://registry.npmmirror.com/page-agent/1.11.0/files/dist/iife/page-agent.demo.js"
+      crossorigin="true"
+    ></script>
+    <script>
+      (function () {
+        // 悬浮 AI 小球（默认收起，点击展开 page-agent 面板）
+        // 位置叠在便利贴悬浮按钮（bottom:24、40px）上方并右对齐、尺寸一致，留 32px 间距。
+        var ball = document.createElement('button');
+        ball.id = 'pa-ball';
+        // 清新 AI 标识：双 sparkle（四角星）白色描边填充。
+        ball.innerHTML =
+          '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+          '<path d="M11 2.5c.45 3.9 2.1 5.55 6 6-3.9.45-5.55 2.1-6 6-.45-3.9-2.1-5.55-6-6 3.9-.45 5.55-2.1 6-6Z" fill="#fff"/>' +
+          '<path d="M18.5 13c.2 1.9 1 2.7 2.9 2.9-1.9.2-2.7 1-2.9 2.9-.2-1.9-1-2.7-2.9-2.9 1.9-.2 2.7-1 2.9-2.9Z" fill="#fff" fill-opacity=".85"/>' +
+          '</svg>';
+        ball.title = 'AI 助手';
+        Object.assign(ball.style, {
+          position: 'fixed',
+          right: '24px',
+          bottom: '96px',
+          width: '40px',
+          height: '40px',
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg,#22d3ee,#3b82f6)',
+          border: 'none',
+          color: '#fff',
+          cursor: 'pointer',
+          userSelect: 'none',
+          boxShadow: '0 4px 16px rgba(34,211,238,.4)',
+          zIndex: '99999',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'transform .2s,box-shadow .2s',
+        });
+        ball.addEventListener('mouseenter', function () {
+          ball.style.transform = 'scale(1.1)';
+          ball.style.boxShadow = '0 6px 24px rgba(34,211,238,.6)';
+        });
+        ball.addEventListener('mouseleave', function () {
+          ball.style.transform = '';
+          ball.style.boxShadow = '0 4px 16px rgba(34,211,238,.4)';
+        });
+        document.body.appendChild(ball);
+
+        function showBall() {
+          ball.style.display = 'flex';
+        }
+        function hideBall() {
+          ball.style.display = 'none';
+        }
+
+        // 拦截 panel 关闭逻辑，恢复小球
+        function patchPanel(panel) {
+          var origHide = panel.hide.bind(panel);
+          // hide：正常隐藏，然后显示小球
+          panel.hide = function () {
+            origHide();
+            showBall();
+          };
+          // dispose：X 按钮会触发 dispose，但 dispose 后面板不可复用
+          // 改为只调 hide，保留面板实例，下次点小球还能 show
+          panel.dispose = function () {
+            origHide();
+            showBall();
+          };
+        }
+
+        // CDN 脚本通过 setTimeout 异步创建 window.pageAgent（小写 p）
+        // 轮询等待就绪，就绪后立刻 hide 面板保持收起状态
+        var timer = setInterval(function () {
+          if (window.pageAgent && window.pageAgent.panel) {
+            clearInterval(timer);
+            window.pageAgent.panel.hide();
+            patchPanel(window.pageAgent.panel);
+          }
+        }, 50);
+
+        ball.addEventListener('click', function () {
+          if (!window.pageAgent) {
+            console.warn('[pa-ball] page-agent 尚未初始化，请稍候再试');
+            return;
+          }
+          window.pageAgent.panel.show();
+          hideBall();
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wensaas.core.impl.file.SysFileFolderMapper">
+
+    <sql id="allColumns">
+        id, tenant_id, space, parent_id, name, depth, owner_id,
+        created_at, created_by, updated_at, updated_by, deleted_at
+    </sql>
+
+    <select id="selectChildren" resultType="com.wensaas.core.impl.file.SysFileFolder">
+        SELECT <include refid="allColumns"/>
+        FROM sys_file_folder
+        WHERE space = #{space}
+          AND deleted_at IS NULL
+        <choose>
+            <when test="parentId == null">AND parent_id IS NULL</when>
+            <otherwise>AND parent_id = #{parentId}</otherwise>
+        </choose>
+        <if test="ownerId != null">AND owner_id = #{ownerId}</if>
+        ORDER BY name
+    </select>
+
+    <!-- TenantLine 已在 mapper 方法上 @InterceptorIgnore 关闭，租户隔离改由下方显式 tenant_id 条件保证。 -->
+    <select id="selectSubtreeIds" resultType="java.lang.Long">
+        WITH RECURSIVE sub AS (
+            SELECT id, parent_id FROM sys_file_folder
+            WHERE id = #{rootId} AND deleted_at IS NULL AND tenant_id = #{tenantId}
+            UNION ALL
+            SELECT f.id, f.parent_id FROM sys_file_folder f
+            JOIN sub ON f.parent_id = sub.id
+            WHERE f.deleted_at IS NULL AND f.tenant_id = #{tenantId}
+        )
+        SELECT id FROM sub
+    </select>
+
+    <select id="selectDeletedSubtreeIds" resultType="java.lang.Long">
+        WITH RECURSIVE sub AS (
+            SELECT id, parent_id FROM sys_file_folder
+            WHERE id = #{rootId} AND deleted_at IS NOT NULL AND tenant_id = #{tenantId}
+            UNION ALL
+            SELECT f.id, f.parent_id FROM sys_file_folder f
+            JOIN sub ON f.parent_id = sub.id
+            WHERE f.deleted_at IS NOT NULL AND f.tenant_id = #{tenantId}
+        )
+        SELECT id FROM sub
+    </select>
+
+    <select id="selectRecycledRoots" resultType="com.wensaas.core.impl.file.SysFileFolder">
+        SELECT <include refid="allColumns"/>
+        FROM sys_file_folder d
+        WHERE d.space = #{space}
+          AND d.deleted_at IS NOT NULL
+        <if test="ownerId != null">AND d.owner_id = #{ownerId}</if>
+          AND (d.parent_id IS NULL
+               OR NOT EXISTS (SELECT 1 FROM sys_file_folder p
+                              WHERE p.id = d.parent_id AND p.deleted_at IS NOT NULL))
+        ORDER BY d.deleted_at DESC
+    </select>
+
+    <select id="selectByIdIncludeDeleted" resultType="com.wensaas.core.impl.file.SysFileFolder">
+        SELECT <include refid="allColumns"/>
+        FROM sys_file_folder
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <update id="softDeleteByIds">
+        UPDATE sys_file_folder SET deleted_at = now()
+        WHERE deleted_at IS NULL AND id IN
+        <foreach collection="ids" item="i" open="(" separator="," close=")">#{i}</foreach>
+    </update>
+
+    <update id="restoreByIds">
+        UPDATE sys_file_folder SET deleted_at = NULL
+        WHERE deleted_at IS NOT NULL AND id IN
+        <foreach collection="ids" item="i" open="(" separator="," close=")">#{i}</foreach>
+    </update>
+
+    <update id="reattachToRoot">
+        UPDATE sys_file_folder SET parent_id = NULL, depth = 1
+        WHERE id = #{id}
+          AND parent_id IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM sys_file_folder p
+                          WHERE p.id = sys_file_folder.parent_id AND p.deleted_at IS NULL)
+    </update>
+
+    <update id="shiftDepthByIds">
+        UPDATE sys_file_folder SET depth = depth + #{delta}
+        WHERE id IN
+        <foreach collection="ids" item="i" open="(" separator="," close=")">#{i}</foreach>
+    </update>
+
+    <delete id="physicalDeleteByIds">
+        DELETE FROM sys_file_folder WHERE id IN
+        <foreach collection="ids" item="i" open="(" separator="," close=")">#{i}</foreach>
+    </delete>
+
+    <select id="selectSoftDeletedBefore" resultType="com.wensaas.core.impl.file.SysFileFolder">
+        SELECT <include refid="allColumns"/>
+        FROM sys_file_folder
+        WHERE deleted_at IS NOT NULL
+          AND deleted_at &lt; #{threshold}
+        ORDER BY deleted_at ASC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

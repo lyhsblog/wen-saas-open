@@ -1,0 +1,14 @@
+packages:
+  - apps/*
+  - packages/*
+  - modules/*
+peerDependencyRules:
+  allowedVersions:
+    react: '19'
+    react-dom: '19'
+onlyBuiltDependencies:
+  - msw
+allowBuilds:
+  msw: true
+minimumReleaseAgeExclude:
+  - vite@8.0.14

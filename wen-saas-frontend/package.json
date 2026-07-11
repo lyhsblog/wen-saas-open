@@ -1,0 +1,74 @@
+{
+  "name": "wen-saas-frontend",
+  "version": "0.9.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@11.2.2",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev:ops": "vite --host 0.0.0.0 --port 5173 apps/ops-web",
+    "dev:tenant": "vite --host 0.0.0.0 --port 5174 apps/tenant-web",
+    "dev:h5": "vite --host 0.0.0.0 --port 5175 apps/h5",
+    "build": "tsc -b && corepack pnpm build:ops && corepack pnpm build:tenant && corepack pnpm build:h5 && tar -czf dist-frontend.tar.gz -C dist ops-web tenant-web h5",
+    "build:ops": "tsc -b apps/ops-web && vite build apps/ops-web --outDir ../../dist/ops-web --emptyOutDir",
+    "build:tenant": "tsc -b apps/tenant-web && vite build apps/tenant-web --outDir ../../dist/tenant-web --emptyOutDir",
+    "build:h5": "tsc -b apps/h5 && vite build apps/h5 --outDir ../../dist/h5 --emptyOutDir",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:live": "playwright test --config=playwright.live.config.ts",
+    "seed:live": "node scripts/seed-live-fixtures.mjs",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report",
+    "gen:types": "node scripts/gen-openapi-types.mjs",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "antd-img-crop": "4.30.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.0.1",
+    "@commitlint/config-conventional": "^21.0.1",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.60.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "@wen-saas/api-client": "workspace:*",
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.6.0",
+    "husky": "^9.1.7",
+    "jsdom": "^29.1.1",
+    "lint-staged": "^17.0.5",
+    "msw": "^2.14.6",
+    "openapi-typescript": "^7.13.0",
+    "prettier": "^3.8.3",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.59.4",
+    "vite": "8.0.14",
+    "vitest": "^4.1.7"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,mjs,cjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css}": [
+      "prettier --write"
+    ]
+  }
+}

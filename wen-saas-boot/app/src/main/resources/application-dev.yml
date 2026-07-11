@@ -1,0 +1,74 @@
+# dev 环境配置
+# 假设本机 PostgreSQL 18 运行在 127.0.0.1:5432，库 wen_saas，用户 postgres/root
+# Redis / RocketMQ 都在本机 Docker 起来
+
+spring:
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/wen_saas
+    username: postgres
+    password: root
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: WenSaasBootHikari
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 5000
+      max-lifetime: 1800000
+      auto-commit: true
+  data:
+    # Redis 客户端为 Redisson（唯一工厂，已替换 Lettuce）。基础连接仍读 spring.data.redis.*；
+    # 连接池 / 线程等高级项走 Redisson 默认，dev 无需调优。如需细调可加 spring.data.redis.redisson.config。
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      password: root
+      database: 0
+      timeout: 3000ms
+
+# 本机 Docker RocketMQ 5.x：客户端走独立 Proxy 容器的 gRPC 端口 8081，不再直连 NameServer。
+# endpoints 写 127.0.0.1:8081：独立 proxy(CLUSTER 模式)自报给客户端的 gRPC 端点是 127.0.0.1，
+# 与这里一致，客户端复用同一条 telemetry 会话。端口必须 8081（容器内一致、不可重映射，否则客户端
+# 连不上 proxy 自报端口 → "Stream is already completed"）。
+# 注意：不能用 broker+proxy 合并模式(mqbroker --enable-proxy)——那会让 proxy 自报地址绑死成
+# broker.conf 的 brokerIP1=host.docker.internal，宿主机 app 对它建 gRPC 长流连不通（详见 docker-compose 注释）。
+rocketmq:
+  producer:
+    endpoints: 127.0.0.1:8081
+    # 自建 RocketMQ Proxy 为明文 gRPC，关 TLS；消费者侧对应 @RocketMQMessageListener(sslEnabled=false)
+    ssl-enabled: false
+  push-consumer:
+    endpoints: 127.0.0.1:8081
+
+management:
+  endpoint:
+    health:
+      # dev 环境直接显示组件健康详情，便于排查（prod 由 application-prod.yml 覆盖为 never）
+      show-details: always
+
+wen-saas-boot:
+  notification:
+    # 本地真发（email-noop=false）时的当日邮件量兜底闸，防脚本刷爆 / 阿里云账单失控
+    email-daily-limit: 100
+  file:
+    local:
+      # 注意：IDE / maven / jar 不同启动方式 CWD 不同，相对路径会落到不同物理目录；
+      # 需要锁定同一目录时用 WEN_SAAS_BOOT_FILE_LOCAL_ROOT 指定绝对路径覆盖。
+      root: '${WEN_SAAS_BOOT_FILE_LOCAL_ROOT:./data/files}'
+  webhook:
+    # dev：允许回调地址指向 localhost/私网，便于本地起接收端联调；生产默认 false（防 SSRF）
+    allow-private-targets: true
+  auth:
+    # dev：未登录请求保留 X-Tenant-Id header 兼容（便于本地调试与早期集成测试）
+    allow-tenant-id-header: true
+    # dev：本地经 vite proxy 走 http://{子域}.localhost，refresh cookie 不能带 Secure（否则浏览器不下发）；prod 默认 true。
+    refresh-cookie-secure: false
+    # dev：access token 调短便于联调静默刷新（生产默认 15m）。本地手测 token 反复过期烦，调到 30m。
+    access-token-ttl: 30m
+
+logging:
+  level:
+    root: INFO
+    com.wensaas: DEBUG
+    org.flywaydb: INFO
+    com.zaxxer.hikari: INFO
+    org.redisson: INFO

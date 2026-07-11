@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wensaas.core.impl.audit.log.SysOperationLogMapper">
+
+    <!--
+      批量 INSERT（Consumer flush 用）。
+      字段级改前/改后已迁往 ③ sys_data_change_log（PG 触发器），② 不再写 change_before/after。
+      created_at 必须由应用层主动赋值，否则 PG 找不到分区。
+    -->
+    <insert id="insertBatch">
+        INSERT INTO sys_operation_log
+        (id, tenant_id, target_tenant_id, request_id, operator_id, operator_name, operator_dept_id,
+         module, action, object_type, object_id, object_desc, object_refs,
+         method, path, status_code, duration_ms, error_message, ip, user_agent, created_at)
+        VALUES
+        <foreach collection="list" item="it" separator=",">
+            (#{it.id}, #{it.tenantId}, #{it.targetTenantId}, #{it.requestId},
+             #{it.operatorId}, #{it.operatorName}, #{it.operatorDeptId},
+             #{it.module}, #{it.action}, #{it.objectType}, #{it.objectId}, #{it.objectDesc},
+             #{it.objectRefs}::jsonb,
+             #{it.method}, #{it.path}, #{it.statusCode}, #{it.durationMs}, #{it.errorMessage},
+             #{it.ip}, #{it.userAgent}, #{it.createdAt})
+        </foreach>
+    </insert>
+
+</mapper>

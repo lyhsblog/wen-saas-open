@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wensaas.core.impl.notification.template.SysNotificationTemplateMapper">
+
+    <resultMap id="TemplateResultMap" type="com.wensaas.core.impl.notification.template.SysNotificationTemplate">
+        <id     column="id"               property="id"/>
+        <result column="tenant_id"        property="tenantId"/>
+        <result column="template_code"    property="templateCode"/>
+        <result column="module_code"      property="moduleCode"/>
+        <result column="name"             property="name"/>
+        <result column="description"      property="description"/>
+        <result column="available_vars"   property="availableVars"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="default_channels" property="defaultChannels"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="contents"         property="contents"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="notification_category" property="notificationCategory"/>
+        <result column="priority"         property="priority"/>
+        <result column="status"           property="status"/>
+        <result column="created_at"       property="createdAt"/>
+        <result column="created_by"       property="createdBy"/>
+        <result column="updated_at"       property="updatedAt"/>
+        <result column="updated_by"       property="updatedBy"/>
+        <result column="deleted_at"       property="deletedAt"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        id, tenant_id, template_code, module_code, name, description,
+        available_vars, default_channels, contents, notification_category,
+        priority, status, created_at, created_by, updated_at, updated_by, deleted_at
+    </sql>
+
+    <select id="selectPlatformDefault" resultMap="TemplateResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM sys_notification_template
+        WHERE deleted_at IS NULL
+          AND tenant_id = 0
+          AND template_code = #{templateCode}
+        LIMIT 1
+    </select>
+
+    <select id="selectPlatformAll" resultMap="TemplateResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM sys_notification_template
+        WHERE deleted_at IS NULL
+          AND tenant_id = 0
+        ORDER BY template_code
+    </select>
+
+</mapper>

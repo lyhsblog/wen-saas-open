@@ -1,0 +1,143 @@
+name: wen-saas
+
+# 数据落盘统一用宿主机 ./data/ 子目录直接 bind mount，不用 named volume + subPath：
+# volume 的 :subPath= 短语法跨 Docker 版本行为漂移（Docker Desktop 29.4.3 / Compose v5.1.4
+# 下被静默丢弃，所有服务共挂卷根；2026-07-02 实测），直接 bind 语义在各版本一致。
+# bind 源目录不存在时 Docker 会自动创建，无需预先 mkdir。
+services:
+  # PostgreSQL
+  postgreSQL-18:
+    image: postgres:18
+    container_name: postgreSQL-18
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PWD}
+    volumes:
+      - ./data/postgresql:/var/lib/postgresql
+
+  # Redis（配置全走命令行参数，不挂配置文件）
+  redis:
+    image: redis:8.0-bookworm
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data/redis/data:/data
+    command: redis-server --appendonly yes --requirepass "${REDIS_PWD}"
+
+  # RocketMQ-NameServer
+  rocketmq-namesrv:
+    image: apache/rocketmq:5.3.2
+    container_name: rocketmq-namesrv
+    restart: always
+    ports:
+      - 9876:9876
+    environment:
+      - JAVA_OPT_EXT=-Xms256M -Xmx256M
+    volumes:
+      - ./data/rocketmq/nameserver/logs:/home/rocketmq/logs
+    networks:
+      - rocketmq
+    command: sh mqnamesrv
+
+  # RocketMQ-Broker（纯 broker，不开内置 proxy）。
+  # 不用 mqbroker --enable-proxy 的合并模式：合并(LOCAL proxy)下 proxy 把自报给客户端的 gRPC 端点
+  # 绑死成 broker.conf 的 brokerIP1=host.docker.internal，而宿主机上的 app 用它建 gRPC telemetry 长流
+  # 连不通(Network closed)；独立 proxy(下面 CLUSTER 模式)才能把「容器内客户端用的 broker 10911 地址」
+  # 与「宿主 app 用的 proxy 8081 gRPC 地址(127.0.0.1)」解耦，这是本机 host+容器混合拓扑唯一稳的方式。
+  rocketmq-broker:
+    image: apache/rocketmq:5.3.2
+    container_name: rocketmq-broker
+    restart: always
+    ports:
+      - 10909:10909
+      - 10911:10911
+      - 10912:10912
+    environment:
+      - NAMESRV_ADDR=rocketmq-namesrv:9876
+      - JAVA_OPT_EXT=-Xms512M -Xmx1G
+    volumes:
+      - ./data/rocketmq/broker/logs:/home/rocketmq/logs
+      - ./data/rocketmq/broker/store:/home/rocketmq/store
+      - ./conf/broker.conf:/home/rocketmq/broker.conf
+    depends_on:
+      - rocketmq-namesrv
+    networks:
+      - rocketmq
+    command: sh mqbroker -c /home/rocketmq/broker.conf
+
+  # RocketMQ-Proxy（独立容器，CLUSTER 模式 sh mqproxy）。宿主机 app 走它的 gRPC 8081。
+  rocketmq-proxy:
+    image: apache/rocketmq:5.3.2
+    container_name: rocketmq-proxy
+    restart: always
+    depends_on:
+      - rocketmq-broker
+      - rocketmq-namesrv
+    ports:
+      - 18080:8080
+      # gRPC 端口必须宿主=容器一致：proxy 在路由里自报容器端口 8081 给客户端建 telemetry 流，
+      # 宿主若重映射(如 18081)，客户端连不上自报端口 → "Stream is already completed" → 消费者启动失败。
+      - 8081:8081
+    environment:
+      - NAMESRV_ADDR=rocketmq-namesrv:9876
+      - JAVA_OPT_EXT=-Xmx1G
+    volumes:
+      - ./data/rocketmq/proxy/logs:/home/rocketmq/logs
+      - ./data/rocketmq/proxy/store:/home/rocketmq/store
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - rocketmq
+    command: sh mqproxy
+
+  # RocketMQ-TopicInit：一次性容器，待 broker 注册到 namesrv 后预建 app 消费者订阅的 10 个 topic 后退出。
+  # v5 gRPC consumer 启动期严格 fetchTopicRoute，topic 不存在即启动失败，故必须先于 app 建好（不能依赖 autoCreateTopic）。
+  rocketmq-topic-init:
+    image: apache/rocketmq:5.3.2
+    container_name: rocketmq-topic-init
+    restart: "no"
+    depends_on:
+      - rocketmq-broker
+    networks:
+      - rocketmq
+    entrypoint:
+      - sh
+      - -c
+      - |
+        set -e
+        echo "waiting for broker registered on namesrv...";
+        for i in $$(seq 1 60); do
+          if sh mqadmin clusterList -n rocketmq-namesrv:9876 2>/dev/null | grep -q broker-a; then
+            echo "broker is up"; break;
+          fi
+          sleep 2;
+        done
+        for t in wen_audit_operation wen_audit_login wen_notify_station wen_notify_email \
+                 wen_notify_sms wen_notify_im wen_task_execute wen_api_call_log \
+                 wen_event wen_webhook_send; do
+          sh mqadmin updateTopic -n rocketmq-namesrv:9876 -c DefaultCluster -t $$t;
+        done
+        echo "all topics ready";
+
+  # RocketMQ-Dashboard
+  rocketmq-dashboard:
+    image: apacherocketmq/rocketmq-dashboard:latest
+    container_name: rocketmq-dashboard
+    restart: always
+    ports:
+      - "18082:8082"
+    environment:
+      - JAVA_OPTS=-Drocketmq.namesrv.addr=rocketmq-namesrv:9876
+      - JAVA_OPT_EXT=-Xmx512M
+    depends_on:
+      - rocketmq-namesrv
+    networks:
+      - rocketmq
+
+networks:
+  rocketmq:
+    driver: bridge

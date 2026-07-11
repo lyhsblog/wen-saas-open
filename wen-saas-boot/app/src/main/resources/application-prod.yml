@@ -1,0 +1,40 @@
+# prod 环境配置占位（敏感配置走环境变量 / KMS / Vault）
+
+spring:
+  data:
+    # Redis 客户端为 Redisson（唯一工厂，已替换 Lettuce）；基础连接读 spring.data.redis.*。
+    # 敏感项不给默认值：env 缺失即启动失败强制注入（对齐 prod 配置治理）。
+    redis:
+      host: ${WEN_SAAS_BOOT_REDIS_HOST}
+      port: ${WEN_SAAS_BOOT_REDIS_PORT:6379}
+      password: ${WEN_SAAS_BOOT_REDIS_PASSWORD}
+      database: ${WEN_SAAS_BOOT_REDIS_DATABASE:0}
+      timeout: ${WEN_SAAS_BOOT_REDIS_TIMEOUT:3000ms}
+
+rocketmq:
+  producer:
+    endpoints: ${WEN_SAAS_BOOT_ROCKETMQ_ENDPOINTS}
+    # 自建 Proxy 明文 gRPC；接 TLS proxy（如阿里云 ONS）需同时改各 @RocketMQMessageListener(sslEnabled)
+    ssl-enabled: ${WEN_SAAS_BOOT_ROCKETMQ_SSL:false}
+  push-consumer:
+    endpoints: ${WEN_SAAS_BOOT_ROCKETMQ_ENDPOINTS}
+
+wen-saas-boot:
+  file:
+    platform-default-backend: aliyun_oss
+    platform-oss:
+      endpoint: ${WEN_SAAS_BOOT_PLATFORM_OSS_ENDPOINT}
+      bucket: ${WEN_SAAS_BOOT_PLATFORM_OSS_BUCKET}
+      access-key-id: ${WEN_SAAS_BOOT_PLATFORM_OSS_AK}
+      access-key-secret: ${WEN_SAAS_BOOT_PLATFORM_OSS_SK}
+      path-prefix: ${WEN_SAAS_BOOT_PLATFORM_OSS_PREFIX:wen-saas-boot}
+
+logging:
+  level:
+    root: WARN
+    com.wensaas: INFO
+
+management:
+  endpoint:
+    health:
+      show-details: never

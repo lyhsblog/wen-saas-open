@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wensaas.core.impl.notification.template.SysNotificationTemplatePrefMapper">
+
+    <resultMap id="PrefResultMap" type="com.wensaas.core.impl.notification.template.SysNotificationTemplatePref">
+        <id     column="id"            property="id"/>
+        <result column="tenant_id"     property="tenantId"/>
+        <result column="template_code" property="templateCode"/>
+        <result column="enabled"       property="enabled"/>
+        <result column="channels"      property="channels"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="priority"      property="priority"/>
+        <result column="created_at"    property="createdAt"/>
+        <result column="created_by"    property="createdBy"/>
+        <result column="updated_at"    property="updatedAt"/>
+        <result column="updated_by"    property="updatedBy"/>
+        <result column="deleted_at"    property="deletedAt"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        id, tenant_id, template_code, enabled, channels, priority,
+        created_at, created_by, updated_at, updated_by, deleted_at
+    </sql>
+
+    <select id="selectByTenantAndCode" resultMap="PrefResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM sys_notification_template_pref
+        WHERE deleted_at IS NULL
+          AND tenant_id = #{tenantId}
+          AND template_code = #{templateCode}
+        LIMIT 1
+    </select>
+
+    <select id="selectByTenant" resultMap="PrefResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM sys_notification_template_pref
+        WHERE deleted_at IS NULL
+          AND tenant_id = #{tenantId}
+    </select>
+
+</mapper>

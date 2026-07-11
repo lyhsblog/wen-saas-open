@@ -1,0 +1,43 @@
+@import '@wen-saas/design-system/tokens.css';
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  /* tokens.css 为 PC 端写死了 body min-width:1280px，移动端必须清掉，否则布局被撑宽 */
+  min-width: 0;
+  /* 移动端：禁用长按选择/高亮的桌面观感 */
+  -webkit-tap-highlight-color: transparent;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* antd-mobile 主题对齐设计令牌（企业蓝 #2b5fff） */
+:root {
+  --adm-color-primary: var(--brand);
+  --adm-font-family: var(--font-family);
+}
+
+/* 分组列表：首行不显示顶部分隔线 */
+.h5-list-group > .h5-list-row:first-child {
+  border-top: none !important;
+}
+
+/* H5 单列容器：超宽屏（桌面预览）下居中并限定移动端宽度 */
+.h5-viewport {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100%;
+  background: var(--bg);
+  position: relative;
+}

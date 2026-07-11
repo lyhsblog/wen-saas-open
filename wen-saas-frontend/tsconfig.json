@@ -1,0 +1,18 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./apps/ops-web" },
+    { "path": "./apps/tenant-web" },
+    { "path": "./apps/h5" },
+    { "path": "./packages/api-client" },
+    { "path": "./packages/auth" },
+    { "path": "./packages/config" },
+    { "path": "./packages/design-system" },
+    { "path": "./packages/domain" },
+    { "path": "./packages/module-runtime" },
+    { "path": "./packages/permissions" },
+    { "path": "./packages/shared-ui" },
+    { "path": "./packages/utils" },
+    { "path": "./modules/base" }
+  ]
+}

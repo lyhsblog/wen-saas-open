@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wensaas.core.impl.dict.SysDictGroupMapper">
+
+    <!--
+      显式 resultMap：extra_schema 走 JacksonTypeHandler 反序列化为 List<DictExtraFieldDef>。
+      与 entity @TableName(autoResultMap=true) 配合，但本 xml 不依赖 MP 自动 resultMap，独立可用。
+    -->
+    <resultMap id="DictGroupResultMap" type="com.wensaas.core.impl.dict.SysDictGroup">
+        <id     column="id"                property="id"/>
+        <result column="tenant_id"         property="tenantId"/>
+        <result column="code"              property="code"/>
+        <result column="name"              property="name"/>
+        <result column="description"       property="description"/>
+        <result column="source"            property="source"/>
+        <result column="module_code"       property="moduleCode"/>
+        <result column="support_hierarchy" property="supportHierarchy"/>
+        <result column="extra_schema"      property="extraSchema"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="status"            property="status"/>
+        <result column="created_at"        property="createdAt"/>
+        <result column="created_by"        property="createdBy"/>
+        <result column="updated_at"        property="updatedAt"/>
+        <result column="updated_by"        property="updatedBy"/>
+        <result column="deleted_at"        property="deletedAt"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        id, tenant_id, code, name, description, source, module_code, support_hierarchy,
+        extra_schema, status, created_at, created_by, updated_at, updated_by, deleted_at
+    </sql>
+
+    <!--
+      取分组"租户视角"定义：合并 tenant_id IN (0, X)，按 tenant_id DESC 优先 CUSTOM。
+      调用方需先 InterceptorIgnoreHelper.handle(tenantLine=true)，否则 TenantLine 会再注入一层 tenant_id =。
+    -->
+    <select id="selectForTenant" resultMap="DictGroupResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM sys_dict_group
+        WHERE deleted_at IS NULL
+          AND code = #{groupCode}
+          AND tenant_id IN (0, #{tenantId})
+        ORDER BY tenant_id DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectByCodeAndSource" resultMap="DictGroupResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM sys_dict_group
+        WHERE deleted_at IS NULL
+          AND tenant_id = #{tenantId}
+          AND code = #{groupCode}
+          AND source = #{source}
+        LIMIT 1
+    </select>
+
+    <select id="selectAllPlatformLevel" resultMap="DictGroupResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM sys_dict_group
+        WHERE deleted_at IS NULL
+          AND tenant_id = 0
+        ORDER BY code
+    </select>
+
+    <!--
+      列租户视角下的全部分组（含停用）。合并 tenant_id IN (0, X)。
+      同 code 出现于平台预置 + 租户自定义时按 tenant_id ASC 排（平台预置在前），UI 侧根据 source 分组分区显示。
+      调用方需先 InterceptorIgnoreHelper.handle(tenantLine=true)。
+    -->
+    <select id="selectAllForTenant" resultMap="DictGroupResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM sys_dict_group
+        WHERE deleted_at IS NULL
+          AND tenant_id IN (0, #{tenantId})
+        ORDER BY source ASC, code ASC
+    </select>
+
+</mapper>

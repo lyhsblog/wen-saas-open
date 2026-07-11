@@ -1,0 +1,21 @@
+{
+  "name": "@wen-saas/permissions",
+  "version": "0.9.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "@wen-saas/api-client": "workspace:*",
+    "zustand": "^5.0.13"
+  },
+  "peerDependencies": {
+    "antd": "^6",
+    "react": "^19"
+  }
+}

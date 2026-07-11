@@ -1,0 +1,18 @@
+{
+  "name": "@wen-saas/auth",
+  "version": "0.9.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "@wen-saas/api-client": "workspace:*",
+    "@wen-saas/domain": "workspace:*",
+    "zustand": "^5.0.13"
+  }
+}

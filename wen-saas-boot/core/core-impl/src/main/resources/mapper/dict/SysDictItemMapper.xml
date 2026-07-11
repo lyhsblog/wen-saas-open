@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wensaas.core.impl.dict.SysDictItemMapper">
+
+    <resultMap id="DictItemResultMap" type="com.wensaas.core.impl.dict.SysDictItem">
+        <id     column="id"          property="id"/>
+        <result column="tenant_id"   property="tenantId"/>
+        <result column="group_code"  property="groupCode"/>
+        <result column="code"        property="code"/>
+        <result column="name"        property="name"/>
+        <result column="parent_id"   property="parentId"/>
+        <result column="ancestors"   property="ancestors"/>
+        <result column="sort_order"  property="sortOrder"/>
+        <result column="status"      property="status"/>
+        <result column="source"      property="source"/>
+        <result column="remark"      property="remark"/>
+        <result column="extra"       property="extra"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="created_at"  property="createdAt"/>
+        <result column="created_by"  property="createdBy"/>
+        <result column="updated_at"  property="updatedAt"/>
+        <result column="updated_by"  property="updatedBy"/>
+        <result column="deleted_at"  property="deletedAt"/>
+    </resultMap>
+
+    <sql id="BaseColumns">
+        id, tenant_id, group_code, code, name, parent_id, ancestors, sort_order, status,
+        source, remark, extra, created_at, created_by, updated_at, updated_by, deleted_at
+    </sql>
+
+    <!--
+      取某分组的启用项："租户视角"合并 tenant_id IN (0, X)。
+      调用方需先 InterceptorIgnoreHelper.handle(tenantLine=true)。
+    -->
+    <select id="selectEnabledForTenant" resultMap="DictItemResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM sys_dict_item
+        WHERE deleted_at IS NULL
+          AND group_code = #{groupCode}
+          AND status = 1
+          AND tenant_id IN (0, #{tenantId})
+        ORDER BY sort_order, code
+    </select>
+
+    <!--
+      管理视图：取某分组的全部项（含停用，按 source asc 平台预置在前）。
+      调用方需先 InterceptorIgnoreHelper.handle(tenantLine=true)。
+    -->
+    <select id="selectAllForTenant" resultMap="DictItemResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM sys_dict_item
+        WHERE deleted_at IS NULL
+          AND group_code = #{groupCode}
+          AND tenant_id IN (0, #{tenantId})
+        ORDER BY source ASC, sort_order ASC, code ASC
+    </select>
+
+    <select id="countByTenantAndGroup" resultType="int">
+        SELECT COUNT(*) FROM sys_dict_item
+        WHERE deleted_at IS NULL
+          AND tenant_id = #{tenantId}
+          AND group_code = #{groupCode}
+    </select>
+
+    <select id="countChildren" resultType="int">
+        SELECT COUNT(*) FROM sys_dict_item
+        WHERE deleted_at IS NULL
+          AND tenant_id = #{tenantId}
+          AND parent_id = #{parentId}
+    </select>
+
+    <select id="selectByCode" resultMap="DictItemResultMap">
+        SELECT <include refid="BaseColumns"/>
+        FROM sys_dict_item
+        WHERE deleted_at IS NULL
+          AND tenant_id = #{tenantId}
+          AND group_code = #{groupCode}
+          AND code = #{code}
+        LIMIT 1
+    </select>
+
+</mapper>
