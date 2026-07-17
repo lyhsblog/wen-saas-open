@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * 通用滑动窗口限流（架构审查低优项：公开端点 IP 级频控）。
+ * 通用滑动窗口限流（公开端点 IP 级频控）。
  *
  * <p>复用 {@code scripts/rate_limit.lua}（ZSet + Lua 原子操作），但按调用方任意 {@code key} 维度计数，
  * 不绑定开放 API 的租户 / 凭证语义。供「登录前 / public 未认证」等无业务身份的端点按 IP 限流复用。

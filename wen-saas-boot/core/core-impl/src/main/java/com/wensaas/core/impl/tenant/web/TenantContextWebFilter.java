@@ -74,7 +74,7 @@ public class TenantContextWebFilter extends OncePerRequestFilter {
     }
 
     private static Long parseHeader(String headerValue) {
-        // fail-close（架构审查 M3）：空值 / 非法值<b>不再</b>回退 PLATFORM_TENANT_ID=0，而是返回 null
+        // fail-close：空值 / 非法值<b>不再</b>回退 PLATFORM_TENANT_ID=0，而是返回 null
         // （= 不设置租户上下文，下游 TenantContext.require() 会抛）。避免「漏传/传错 header → 静默落到平台租户」。
         // 需要平台上下文请显式传 "0"。
         if (headerValue == null || headerValue.isBlank()) {
@@ -83,7 +83,7 @@ public class TenantContextWebFilter extends OncePerRequestFilter {
         try {
             return Long.parseLong(headerValue.trim());
         } catch (NumberFormatException e) {
-            log.warn("非法 {} header 值 '{}'，fail-close 不设置租户上下文（架构审查 M3）", TENANT_ID_HEADER, headerValue);
+            log.warn("非法 {} header 值 '{}'，fail-close 不设置租户上下文", TENANT_ID_HEADER, headerValue);
             return null;
         }
     }

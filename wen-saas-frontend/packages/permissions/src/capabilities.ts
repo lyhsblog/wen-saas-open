@@ -14,9 +14,9 @@ export type MenuNode = {
 };
 
 /**
- * 当前用户的能力包。契约未 freeze（见架构 §二十 候选 B）：
+ * 当前用户的能力包。契约未 freeze，后端仍可能调整：
  * 暂按 `GET /api/v1/me/capabilities` 实现 loadCapabilities；
- * 后端最终若选候选 A（扩 /api/auth/me），调用方改 loader 即可。
+ * 后端最终若改为由 /api/auth/me 一并返回，调用方改 loader 即可。
  */
 export type Capabilities = {
   /** 权限点列表，如 `org.member.create`、`dict.group.delete`。 */

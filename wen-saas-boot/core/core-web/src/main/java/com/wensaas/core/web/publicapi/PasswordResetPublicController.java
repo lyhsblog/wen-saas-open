@@ -25,7 +25,7 @@ import java.time.format.DateTimeFormatter;
  * <p>支撑前端 {@code /reset-password/{token}} 页面（租户子域）。
  *
  * <p>仅负责 HTTP 编解码；token 校验 / 密码哈希 / 账号激活等业务编排（含事务与跨租户作用域）下沉到
- * {@link PasswordResetPublicService}（架构审查 M11）。
+ * {@link PasswordResetPublicService}。
  */
 @Tag(name = "public-reset-password", description = "公开密码重置")
 @SecurityRequirements

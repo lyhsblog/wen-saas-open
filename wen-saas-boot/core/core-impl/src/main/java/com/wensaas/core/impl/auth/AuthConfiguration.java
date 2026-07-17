@@ -278,7 +278,7 @@ public class AuthConfiguration {
         return new PublicEndpointRateLimitFilter(rateLimiter, props);
     }
 
-    /** 公开密码重置编排（架构审查 M11：从 Controller 抽回 service，写路径带事务 + 窄 @CrossTenantQuery）。 */
+    /** 公开密码重置编排（写路径带事务 + 窄 @CrossTenantQuery）。 */
     @Bean
     public PasswordResetPublicService passwordResetPublicService(PasswordResetTokenService resetTokenService,
                                                                  TenantQueryService tenantQuery,

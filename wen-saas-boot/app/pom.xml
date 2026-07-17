@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.wensaas</groupId>
         <artifactId>wen-saas-boot</artifactId>
-        <version>0.9.0</version>
+        <version>0.9.1</version>
     </parent>
 
     <artifactId>wen-saas-boot-app</artifactId>
@@ -22,7 +22,7 @@
         </dependency>
 
         <!-- Prometheus 指标 registry：让 application.yml 暴露的 /actuator/prometheus 真正可用
-             （架构审查 H4：原先暴露了端点但缺该依赖 → 404）。版本由 Spring Boot BOM 托管。 -->
+             （缺该依赖时端点 404）。版本由 Spring Boot BOM 托管。 -->
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>

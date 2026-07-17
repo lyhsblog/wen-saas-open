@@ -267,6 +267,51 @@ class PackageAdminIntegrationTest {
     }
 
     @Test
+    void declaredPackage_deleteRejected_sourceModuleExposed() throws Exception {
+        String token = loginOps();
+        String code = TEST_PKG_PREFIX + "DECLARED";
+        fixtures.seedDeclaredPackage(code, "模块预置包", "it-crm");
+
+        // 详情/列表透出 sourceModule
+        mvc.perform(get("/api/v1/ops/packages/" + code)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sourceModule").value("it-crm"));
+
+        // 即便处于草稿态，模块预置套餐也不可删除（防重启复活）
+        mvc.perform(delete("/api/v1/ops/packages/" + code)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.code").value("DECLARED_PACKAGE_PROTECTED"));
+
+        // 其余操作不受限：改名 / 上架 / 下架均可
+        mvc.perform(put("/api/v1/ops/packages/" + code)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JSON.toJSONString(updateReq("运营改名", null, null, null))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("运营改名"));
+        mvc.perform(put("/api/v1/ops/packages/" + code + "/publish")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
+        mvc.perform(put("/api/v1/ops/packages/" + code + "/unpublish")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
+
+        // 复制出的新包归运营（sourceModule=null），可正常删除
+        String dst = TEST_PKG_PREFIX + "DECL_COPY";
+        mvc.perform(post("/api/v1/ops/packages/" + code + "/copy")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JSON.toJSONString(Map.of("code", dst, "name", "预置包副本"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sourceModule").isEmpty());
+        mvc.perform(delete("/api/v1/ops/packages/" + dst)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
     void listAvailableModules_returnsBusinessModules() throws Exception {
         String token = loginOps();
 
@@ -484,6 +529,22 @@ class PackageAdminIntegrationTest {
                 pkg.setStatus(1);
                 packageMapper.insert(pkg);
             }
+        }
+
+        /** 模拟 SPI 同步器落库的模块预置套餐（草稿态，便于验证"草稿也不可删"）。 */
+        void seedDeclaredPackage(String code, String name, String sourceModule) {
+            SysPackage pkg = new SysPackage();
+            pkg.setCode(code);
+            pkg.setName(name);
+            pkg.setIsSystem(false);
+            pkg.setStatus(0);
+            pkg.setSourceModule(sourceModule);
+            packageMapper.insert(pkg);
+
+            SysPackageModule row = new SysPackageModule();
+            row.setPackageId(pkg.getId());
+            row.setModuleCode(sourceModule);
+            packageModuleMapper.insert(row);
         }
 
         void ensureBusinessModule(String code, String name) {

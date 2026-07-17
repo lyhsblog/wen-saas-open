@@ -48,7 +48,7 @@
         LIMIT 1
     </select>
 
-    <!-- 跨租户判活（架构审查 M13）：故意不带 tenant_id，调用方旁路 TenantLine。 -->
+    <!-- 跨租户判活：故意不带 tenant_id，调用方旁路 TenantLine。 -->
     <select id="countOtherIndexedPeers" resultType="long">
         SELECT COUNT(*)
         FROM sys_custom_field_def

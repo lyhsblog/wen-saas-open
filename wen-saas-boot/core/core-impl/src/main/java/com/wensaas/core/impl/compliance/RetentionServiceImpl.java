@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * 数据留存与软删除策略服务实现。
  *
- * <p>策略矩阵为声明式常量（与 §四 表格一致）；文件回收站统计读当前租户 {@code sys_file}
+ * <p>策略矩阵为声明式常量，即各类数据留存策略的权威定义；文件回收站统计读当前租户 {@code sys_file}
  * 软删记录（租户线由拦截器自动过滤）。真删（彻底销户）不在此提供，走运营线下流程。
  */
 public class RetentionServiceImpl implements RetentionService {

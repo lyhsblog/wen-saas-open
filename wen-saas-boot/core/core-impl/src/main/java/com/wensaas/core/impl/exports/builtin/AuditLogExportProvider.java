@@ -13,7 +13,7 @@ import java.util.Map;
 
 /**
  * 审计日志导出（导出对象 {@code audit_log}，与 {@code BaseExportObjectContributor} 声明对齐，
- * 默认需审批）。复用 {@link TenantOperationLogQueryService}（UX3 审计日志视图同源），
+ * 默认需审批）。复用 {@link TenantOperationLogQueryService}（与租户审计日志视图同源），
  * {@code restrictOperatorId=null}——发起权限 {@code audit.view} 与页面一致（管理员看全租户）。
  *
  * <p>filters：{@code startAt} / {@code endAt}（ISO-8601 Instant）/ {@code operatorId} /

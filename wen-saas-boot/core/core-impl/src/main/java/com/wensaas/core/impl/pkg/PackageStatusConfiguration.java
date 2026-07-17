@@ -33,4 +33,10 @@ public class PackageStatusConfiguration {
                                                   ObjectProvider<PackageStatusGuard> packageStatusGuard) {
         return new TenantCacheEvictor(activityGuard, packageStatusGuard);
     }
+
+    @Bean
+    public PackageSpiSynchronizer packageSpiSynchronizer(SysPackageMapper packageMapper,
+                                                          SysPackageModuleMapper packageModuleMapper) {
+        return new PackageSpiSynchronizer(packageMapper, packageModuleMapper);
+    }
 }

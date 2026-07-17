@@ -2,6 +2,7 @@ package com.wensaas.core.impl.spi.integration;
 
 import com.wensaas.core.api.spi.BusinessModuleDescriptor;
 import com.wensaas.core.api.spi.ModuleMetadata;
+import com.wensaas.core.api.spi.def.PackageDef;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -40,6 +41,13 @@ public class SpiV2TestFixtures {
             public ModuleMetadata metadata() {
                 return new ModuleMetadata("a", "Module A", null, version, null, List.of("b"));
             }
+
+            @Override
+            public List<PackageDef> packages() {
+                // 预置套餐：跨模块引用 b，声明模块 a 由同步器隐含并入
+                return List.of(new PackageDef("a.starter", "A 入门包", "SPI v2 集成测试预置套餐",
+                        List.of("b"), null, true));
+            }
         };
     }
 
@@ -74,6 +82,9 @@ public class SpiV2TestFixtures {
 
         public void init() {
             jdbc.update("DELETE FROM sys_business_module WHERE code IN (?, ?)", "a", "b");
+            jdbc.update("DELETE FROM sys_package_module WHERE package_id IN "
+                    + "(SELECT id FROM sys_package WHERE code = ?)", "a.starter");
+            jdbc.update("DELETE FROM sys_package WHERE code = ?", "a.starter");
         }
     }
 }

@@ -6,7 +6,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import java.time.Duration;
 
 /**
- * 基于 Redis {@code SET key val NX EX ttl} 的幂等去重实现（架构审查 M1 / M6）。
+ * 基于 Redis {@code SET key val NX EX ttl} 的幂等去重实现。
  *
  * <p>{@link #firstSeen} 用 {@code setIfAbsent}（底层 SET NX）做原子声明；并发重复只有一个返回
  * {@code true}。{@link #runOnce} 封装「成功保留声明 / 失败回滚声明」，失败后允许 MQ 重投重新处理。

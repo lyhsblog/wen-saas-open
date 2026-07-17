@@ -19,7 +19,7 @@ export function recRoleStatusBadge(status: string): StatusBadge {
   return REC_ROLE_STATUS_BADGE[status as RecRoleStatus] ?? FALLBACK_BADGE;
 }
 
-/** 列表排序权重：已发布 > 草稿 > 已下架（PRD §八 默认排序）。 */
+/** 列表排序权重：已发布 > 草稿 > 已下架。 */
 export const REC_ROLE_STATUS_ORDER: Record<RecRoleStatus, number> = {
   PUBLISHED: 0,
   DRAFT: 1,

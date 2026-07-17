@@ -38,7 +38,7 @@ import lombok.ToString;
 import lombok.experimental.Accessors;
 
 /**
- * 租户后台 · 个人中心（原型 tenant-profile.jsx，PRD 03/09/22）。
+ * 租户后台 · 个人中心。
  *
  * <p>前缀 {@code /api/v1/base/profile}，面向租户内任意已登录成员管理自己的账号；
  * 主体取自 {@link UserContext}，无需额外权限点（自助）。与运营侧 {@code OpsProfileController} 平行。

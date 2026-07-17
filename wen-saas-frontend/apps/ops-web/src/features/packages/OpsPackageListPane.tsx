@@ -158,6 +158,7 @@ export function OpsPackageListPane({ selectedCode, onSelect, compact }: Props) {
           >
             <code style={{ fontFamily: 'var(--font-mono)' }}>{p.code}</code>
             {p.isSystem && <CountChip tone="brand">系统</CountChip>}
+            {p.sourceModule && <CountChip tone="brand">模块预置</CountChip>}
             <CountChip>{p.moduleCount} 模块</CountChip>
             <CountChip>{ttlLabel(p.defaultTtlDays)}</CountChip>
           </div>

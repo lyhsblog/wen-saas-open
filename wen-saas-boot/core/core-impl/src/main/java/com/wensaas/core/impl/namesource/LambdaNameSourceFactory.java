@@ -14,7 +14,7 @@ import java.util.List;
  * {@link LambdaNameSource} 构造。
  *
  * <p>让业务模块只 import api（{@code NameSourceFactory} + {@code MatchMode}/{@code RenderMode}）即可一行
- * 注册名称源，不再 import {@code core.impl.namesource.LambdaNameSource}（架构审查 M10）。
+ * 注册名称源，不再 import {@code core.impl.namesource.LambdaNameSource}。
  */
 public class LambdaNameSourceFactory implements NameSourceFactory {
 

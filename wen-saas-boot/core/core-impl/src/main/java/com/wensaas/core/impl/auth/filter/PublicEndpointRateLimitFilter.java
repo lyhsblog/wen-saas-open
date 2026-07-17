@@ -21,7 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * 公开端点 IP 级频控 Filter（架构审查低优项）。
+ * 公开端点 IP 级频控 Filter。
  *
  * <p>顺序 {@code HIGHEST_PRECEDENCE + 40}：在 {@code RequestIdFilter}（{@code 0}）之后、
  * {@code AuthenticationFilter}（{@code +50}）之前，对配置的公开路径按客户端 IP 限流，超限即 429，

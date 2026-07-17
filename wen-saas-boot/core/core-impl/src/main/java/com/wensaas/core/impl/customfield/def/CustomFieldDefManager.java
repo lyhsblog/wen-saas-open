@@ -190,8 +190,7 @@ public class CustomFieldDefManager {
     }
 
     /**
-     * 物理删除共享表达式索引——仅当无其他租户仍对同一 {@code (object, field)} 索引化时才真正 DROP
-     * （架构审查 M13）。
+     * 物理删除共享表达式索引——仅当无其他租户仍对同一 {@code (object, field)} 索引化时才真正 DROP。
      *
      * <p>索引名 {@code idx_{table}_extra_{field}} 不含 tenant_id、跨租户共享（首个租户 CREATE、其余
      * {@code IF NOT EXISTS} 复用）。盲目 {@code DROP} 会误删其他租户仍在用的索引，使其查询静默退化全表扫。

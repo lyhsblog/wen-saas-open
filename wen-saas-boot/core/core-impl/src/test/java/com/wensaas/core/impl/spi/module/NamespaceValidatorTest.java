@@ -11,6 +11,7 @@ import com.wensaas.core.api.spi.def.DashboardCardSpan;
 import com.wensaas.core.api.spi.def.DictGroupDef;
 import com.wensaas.core.api.spi.def.H5PageDef;
 import com.wensaas.core.api.spi.def.NotificationTemplateDef;
+import com.wensaas.core.api.spi.def.PackageDef;
 import com.wensaas.core.api.spi.def.PermissionDef;
 import org.junit.jupiter.api.Test;
 
@@ -109,6 +110,53 @@ class NamespaceValidatorTest {
                 .hasMessageContaining("命名空间越界");
     }
 
+    @Test
+    void duplicatePackageCode_throws() {
+        var a = new TestModule("crm", "1.0.0")
+                .withPackages(PackageDef.of("crm.starter", "A", null));
+        var b = new TestModule("crm2", "1.0.0")
+                .withPackages(new PackageDef("crm.starter", "B", null, List.of("crm"), null, true));
+        // b 同时触发编码冲突与命名空间越界（crm.starter 不在 crm2 空间），都该在聚合消息里
+        Throwable thrown = catchThrowable(() -> validator.validate(List.of(a, b)));
+        assertThat(thrown).isInstanceOf(BusinessModuleConflictException.class);
+        assertThat(thrown.getMessage())
+                .contains("预置套餐编码冲突")
+                .contains("命名空间越界");
+    }
+
+    @Test
+    void packageCodeOutsideOwnerNamespace_throws() {
+        var crm = new TestModule("crm", "1.0.0")
+                .withPackages(PackageDef.of("approval.starter", "越界包", null));
+        assertThatThrownBy(() -> validator.validate(List.of(crm)))
+                .isInstanceOf(BusinessModuleConflictException.class)
+                .hasMessageContaining("预置套餐编码命名空间越界")
+                .hasMessageContaining("approval.starter");
+    }
+
+    @Test
+    void packageModuleRefMissing_throws() {
+        var crm = new TestModule("crm", "1.0.0")
+                .withPackages(new PackageDef("crm.suite", "套件", null,
+                        List.of("oa", "hr"), null, true));
+        var oa = new TestModule("oa", "1.0.0");
+        // hr 未启用/不存在 → 阻断；oa 存在不报
+        assertThatThrownBy(() -> validator.validate(List.of(crm, oa)))
+                .isInstanceOf(BusinessModuleConflictException.class)
+                .hasMessageContaining("crm.suite")
+                .hasMessageContaining("引用不存在或未启用的模块")
+                .hasMessageContaining("hr");
+    }
+
+    @Test
+    void packageCrossModuleRefToEnabledModule_passes() {
+        var crm = new TestModule("crm", "1.0.0")
+                .withPackages(new PackageDef("crm.suite", "套件", null,
+                        List.of("oa"), null, true));
+        var oa = new TestModule("oa", "1.0.0");
+        validator.validate(List.of(crm, oa));
+    }
+
     private BusinessModuleDescriptor module(String code, List<PermissionDef> permissions) {
         return new TestModule(code, "1.0.0")
                 .withPermissions(permissions.toArray(PermissionDef[]::new));
@@ -131,6 +179,7 @@ class NamespaceValidatorTest {
         private List<H5PageDef> h5 = List.of();
         private List<NotificationTemplateDef> templates = List.of();
         private List<DashboardCardDef> cards = List.of();
+        private List<PackageDef> packages = List.of();
 
         TestModule(String code, String version) {
             this.code = code;
@@ -142,6 +191,7 @@ class NamespaceValidatorTest {
         TestModule withH5(H5PageDef... items) { this.h5 = List.of(items); return this; }
         TestModule withTemplates(NotificationTemplateDef... items) { this.templates = List.of(items); return this; }
         TestModule withCards(DashboardCardDef... items) { this.cards = List.of(items); return this; }
+        TestModule withPackages(PackageDef... items) { this.packages = List.of(items); return this; }
 
         @Override public ModuleMetadata metadata() { return ModuleMetadata.of(code, code, version); }
         @Override public List<PermissionDef> permissions() { return permissions; }
@@ -149,5 +199,6 @@ class NamespaceValidatorTest {
         @Override public List<H5PageDef> h5Pages() { return h5; }
         @Override public List<NotificationTemplateDef> notificationTemplates() { return templates; }
         @Override public List<DashboardCardDef> dashboardCards() { return cards; }
+        @Override public List<PackageDef> packages() { return packages; }
     }
 }

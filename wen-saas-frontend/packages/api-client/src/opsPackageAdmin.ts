@@ -29,6 +29,8 @@ export type PackageListItem = {
   /** null = 永久有效。 */
   defaultTtlDays: number | null;
   isSystem: boolean;
+  /** 来源业务模块编码（SPI 声明的预置套餐，不可物理删除）；null = 运营手工创建。 */
+  sourceModule: string | null;
   moduleCount: number;
   createdAt: string;
   updatedAt: string;
@@ -43,6 +45,8 @@ export type PackageDetail = {
   /** null = 永久有效。 */
   defaultTtlDays: number | null;
   isSystem: boolean;
+  /** 来源业务模块编码（SPI 声明的预置套餐，不可物理删除）；null = 运营手工创建。 */
+  sourceModule: string | null;
   moduleCodes: string[];
   createdAt: string;
   updatedAt: string;

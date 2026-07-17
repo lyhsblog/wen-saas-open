@@ -78,7 +78,7 @@ public class PackageAdminServiceImpl implements PackageAdminService {
         return rows.stream().map(p -> new PackageListItem(
                 p.getCode(), p.getName(), p.getDescription(),
                 PackageStatus.fromCode(p.getStatus()),
-                p.getDefaultTtlDays(), p.getIsSystem(),
+                p.getDefaultTtlDays(), p.getIsSystem(), p.getSourceModule(),
                 countByPkg.getOrDefault(p.getId(), 0L).intValue(),
                 toInstant(p.getCreatedAt()), toInstant(p.getUpdatedAt())
         )).toList();
@@ -254,6 +254,11 @@ public class PackageAdminServiceImpl implements PackageAdminService {
             throw new PackageAdminException(
                     PackageAdminException.Code.BASIC_PACKAGE_PROTECTED, "基础包不可删除");
         }
+        if (pkg.getSourceModule() != null) {
+            throw new PackageAdminException(
+                    PackageAdminException.Code.DECLARED_PACKAGE_PROTECTED,
+                    "业务模块预置套餐不可删除（重启会重新生成），请下架或归档: " + code);
+        }
         if (pkg.getStatus() != STATUS_DRAFT) {
             throw new PackageAdminException(
                     PackageAdminException.Code.INVALID_STATUS_TRANSITION, "仅草稿状态可删除");
@@ -384,7 +389,7 @@ public class PackageAdminServiceImpl implements PackageAdminService {
         return new PackageDetail(
                 pkg.getCode(), pkg.getName(), pkg.getDescription(),
                 PackageStatus.fromCode(pkg.getStatus()),
-                pkg.getDefaultTtlDays(), pkg.getIsSystem(),
+                pkg.getDefaultTtlDays(), pkg.getIsSystem(), pkg.getSourceModule(),
                 moduleCodes, tenantCount,
                 toInstant(pkg.getCreatedAt()), toInstant(pkg.getUpdatedAt()));
     }

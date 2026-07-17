@@ -6,6 +6,7 @@ import com.wensaas.core.api.spi.ModuleMetadata;
 import com.wensaas.core.api.spi.def.PermissionDef;
 import com.wensaas.core.impl.dict.DictSpiSynchronizer;
 import com.wensaas.core.impl.pkg.ModuleApiRouteRegistry;
+import com.wensaas.core.impl.pkg.PackageSpiSynchronizer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -41,6 +43,7 @@ class BusinessModuleRegistrarTest {
     private PermissionRegistry permissionRegistry;
     private ModuleTableValidator tableValidator;
     private BusinessModuleDbSynchronizer dbSynchronizer;
+    private PackageSpiSynchronizer packageSynchronizer;
     private BusinessModuleRegistrar registrar;
     private ApplicationContext context;
 
@@ -51,6 +54,10 @@ class BusinessModuleRegistrarTest {
         permissionRegistry = new PermissionRegistry();
         tableValidator = mock(ModuleTableValidator.class);
         dbSynchronizer = mock(BusinessModuleDbSynchronizer.class);
+        packageSynchronizer = mock(PackageSpiSynchronizer.class);
+        @SuppressWarnings("unchecked")
+        ObjectProvider<PackageSpiSynchronizer> pkgSyncProvider = mock(ObjectProvider.class);
+        when(pkgSyncProvider.getIfAvailable()).thenReturn(packageSynchronizer);
         @SuppressWarnings("unchecked")
         ObjectProvider<DictSpiSynchronizer> dictSyncProvider = mock(ObjectProvider.class);
         when(dictSyncProvider.getIfAvailable()).thenReturn(null);
@@ -77,6 +84,7 @@ class BusinessModuleRegistrarTest {
                 new DataPermissionTableRegistry(),
                 new TaskHandlerRegistry(),
                 new ModuleApiRouteRegistry(),
+                pkgSyncProvider,
                 dictSyncProvider,
                 notifySyncProvider);
         context = mock(ApplicationContext.class);
@@ -109,7 +117,10 @@ class BusinessModuleRegistrarTest {
         assertThat(moduleRegistry.find("approval")).isPresent();
         assertThat(permissionRegistry.size()).isEqualTo(2);
         verify(tableValidator).validate(anyList());
-        verify(dbSynchronizer).sync(anyList());
+        // 套餐同步须在模块表落库之后（sys_package_module.module_code 语义完整）
+        var inOrder = inOrder(dbSynchronizer, packageSynchronizer);
+        inOrder.verify(dbSynchronizer).sync(anyList());
+        inOrder.verify(packageSynchronizer).sync(anyList());
     }
 
     @Test

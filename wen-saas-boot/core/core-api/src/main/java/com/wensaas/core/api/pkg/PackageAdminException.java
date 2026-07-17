@@ -18,6 +18,8 @@ public class PackageAdminException extends RuntimeException {
         INVALID_STATUS_TRANSITION,
         /** 上架后试图移除已包含的模块。 */
         MODULE_REMOVE_FORBIDDEN,
+        /** 业务模块声明的预置套餐不可物理删除（重启会被 SPI 同步器重新插入），仅可下架/归档。 */
+        DECLARED_PACKAGE_PROTECTED,
         /** 勾选的模块编码不存在或未上线。 */
         MODULE_NOT_FOUND
     }

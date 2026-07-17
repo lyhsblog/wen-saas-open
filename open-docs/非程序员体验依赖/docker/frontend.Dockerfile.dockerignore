@@ -1,0 +1,13 @@
+# 前端镜像构建上下文（wen-saas-frontend/）剔除项：依赖与产物容器内现装现建，本机残留不进镜像。
+# 文件名与 frontend.Dockerfile 配对（BuildKit 的 <Dockerfile>.dockerignore 机制）。
+node_modules
+**/node_modules
+dist
+dist-frontend.tar.gz
+.cache
+coverage
+logs
+data
+test-results
+playwright-report
+*.log

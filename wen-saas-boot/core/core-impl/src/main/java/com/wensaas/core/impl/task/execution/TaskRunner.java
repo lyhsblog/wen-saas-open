@@ -77,7 +77,7 @@ public class TaskRunner {
 
         // 原子抢占 PENDING→RUNNING：RocketMQ at-least-once + CONCURRENTLY 下，broker 重投 / 多消费者
         // 并发拉取同一消息会让两条线程都通过上面的 PENDING 判断；用条件 UPDATE 的受影响行数当 CAS，
-        // 只有抢到的那条（affected==1）继续执行，其余安静退出，避免同一任务被执行多次（详见架构审查 H1）。
+        // 只有抢到的那条（affected==1）继续执行，其余安静退出，避免同一任务被执行多次。
         LocalDateTime startedAt = LocalDateTime.now();
         // 用字符串列而非 lambda 方法引用：lambda 方式会即时查 MyBatis entity 缓存，纯单元测试（无 MyBatis 初始化）
         // 会抛 "can not find lambda cache"。字符串列无此依赖，TenantLine 拦截器仍会注入 tenant_id。

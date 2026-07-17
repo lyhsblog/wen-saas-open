@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.wensaas</groupId>
         <artifactId>wen-saas-boot-core</artifactId>
-        <version>0.9.0</version>
+        <version>0.9.1</version>
     </parent>
 
     <artifactId>wen-saas-boot-core-api</artifactId>

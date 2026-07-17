@@ -68,7 +68,7 @@ public class OAuthLoginIdentityProvider
                     "暂不支持的第三方登录渠道：" + c.provider());
         }
 
-        // CSRF 防护（架构审查 M4）：强制校验并一次性消费服务端签发的 state，再换 authCode。
+        // CSRF 防护：强制校验并一次性消费服务端签发的 state，再换 authCode。
         // state 缺失 / 失效 / 与签发渠道不符 → 视作伪造或会话过期，拒绝（且不消耗 authCode）。
         if (!stateStore.consume(c.provider(), c.state())) {
             throw new AuthenticationException(AuthenticationException.Code.BAD_CREDENTIALS,

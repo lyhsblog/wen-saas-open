@@ -5,7 +5,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
- * 分布式锁（底座共性基础能力，架构审查 M1）。
+ * 分布式锁（底座共性基础能力）。
  *
  * <p>底座对外暴露的框架无关契约：调用方面向本接口编程，不直接耦合具体实现（当前为 Redisson）。
  * 实现以「获取—执行—释放」模板方法为主，确保临界区在同一线程内完成获取与释放，并在 {@code finally}

@@ -54,7 +54,7 @@ export function OperationLogView({ scope, title, hint, actions }: Props) {
   const [selected, setSelected] = useState<OperationLogItem | null>(null);
 
   // 筛选条件（仅审计日志页 scope==='tenant' 展示筛选区）。
-  // 草稿（编辑中）与已提交（驱动查询）分离：只有点「查询」才提交（与客户管理同一套 B 端交互规范）。
+  // 草稿（编辑中）与已提交（驱动查询）分离：只有点「查询」才提交（与客户管理同一套交互范式）。
   const showFilters = scope === 'tenant';
   const [rangeDraft, setRangeDraft] = useState<RangeValue>(null);
   const [operatorDraft, setOperatorDraft] = useState<OperatorOption | null>(null);

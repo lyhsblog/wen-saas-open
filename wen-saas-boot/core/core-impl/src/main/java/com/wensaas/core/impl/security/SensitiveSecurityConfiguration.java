@@ -22,7 +22,7 @@ public class SensitiveSecurityConfiguration {
         return new SensitiveFieldCipher(props);
     }
 
-    /** 生产弱密钥兜底：prod profile 下若仍用内置 dev 密钥则阻断启动（架构审查 H3）。 */
+    /** 生产弱密钥兜底：prod profile 下若仍用内置 dev 密钥则阻断启动。 */
     @Bean
     public ProdSecretGuard prodSecretGuard(Environment environment,
                                            AuthProperties authProperties,

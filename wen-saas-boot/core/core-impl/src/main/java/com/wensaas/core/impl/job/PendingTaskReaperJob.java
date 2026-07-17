@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * PENDING 任务补偿巡检（架构审查 M8，本地消息表语义）。
+ * PENDING 任务补偿巡检（本地消息表语义）。
  *
  * <p><b>解决的问题</b>：{@code TaskServiceImpl.submit} 写完 {@code sys_task=PENDING} 后在
  * {@code afterCommit} 钩子里发 MQ；而 {@code RocketMqTaskExecutionPublisher} 用 {@code asyncSend}

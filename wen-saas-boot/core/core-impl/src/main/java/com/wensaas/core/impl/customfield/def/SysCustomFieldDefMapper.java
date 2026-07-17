@@ -27,7 +27,7 @@ public interface SysCustomFieldDefMapper extends BaseMapper<SysCustomFieldDef> {
     /**
      * 跨租户统计：除 {@code excludeFieldId} 外，还有多少未软删字段对同一 {@code (object_code, field_code)}
      * 仍索引化。表达式索引名 {@code idx_{table}_extra_{field}} 跨租户共享，物理 DROP 前用本计数判断
-     * 是否仍有其他租户在用（架构审查 M13）。
+     * 是否仍有其他租户在用。
      *
      * <p><b>本查询故意不带 {@code tenant_id} 条件</b>：调用方须用
      * {@link com.wensaas.core.impl.tenant.isolation.IgnoreStrategyScopes#enter} 旁路 MP TenantLine，否则会被

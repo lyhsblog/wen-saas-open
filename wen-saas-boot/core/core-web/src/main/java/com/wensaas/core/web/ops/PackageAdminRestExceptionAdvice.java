@@ -18,7 +18,7 @@ import java.net.URI;
  * <ul>
  *   <li>404 NOT_FOUND：PACKAGE_NOT_FOUND / MODULE_NOT_FOUND</li>
  *   <li>409 CONFLICT：CODE_CONFLICT</li>
- *   <li>422 UNPROCESSABLE_ENTITY：BASIC_PACKAGE_PROTECTED / INVALID_STATUS_TRANSITION / MODULE_REMOVE_FORBIDDEN</li>
+ *   <li>422 UNPROCESSABLE_ENTITY：BASIC_PACKAGE_PROTECTED / DECLARED_PACKAGE_PROTECTED / INVALID_STATUS_TRANSITION / MODULE_REMOVE_FORBIDDEN</li>
  * </ul>
  */
 @RestControllerAdvice
@@ -30,8 +30,8 @@ public class PackageAdminRestExceptionAdvice {
         HttpStatus status = switch (e.code()) {
             case PACKAGE_NOT_FOUND, MODULE_NOT_FOUND -> HttpStatus.NOT_FOUND;
             case CODE_CONFLICT -> HttpStatus.CONFLICT;
-            case BASIC_PACKAGE_PROTECTED, INVALID_STATUS_TRANSITION, MODULE_REMOVE_FORBIDDEN
-                    -> HttpStatus.UNPROCESSABLE_ENTITY;
+            case BASIC_PACKAGE_PROTECTED, DECLARED_PACKAGE_PROTECTED, INVALID_STATUS_TRANSITION,
+                 MODULE_REMOVE_FORBIDDEN -> HttpStatus.UNPROCESSABLE_ENTITY;
         };
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(status, e.getMessage());
         pd.setTitle("Package admin failed");

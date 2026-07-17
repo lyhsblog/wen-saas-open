@@ -29,6 +29,10 @@ import lombok.experimental.Accessors;
  *   <li>code 永远不可改</li>
  * </ul>
  *
+ * <p>业务模块声明的预置套餐（{@code sourceModule} 非空，启动期 SPI 同步落库）：除物理删除外
+ * 与普通套餐同权——可改名/调模块集/上下架/归档；不可删除（{@code DECLARED_PACKAGE_PROTECTED}，
+ * 否则重启会被同步器重新插入而"复活"）。复制出的新套餐视为运营创建（{@code sourceModule=null}）。
+ *
  * <p>所涉表均在 {@code platform-only-tables} 白名单，无需 {@code @CrossTenantQuery}。
  */
 public interface PackageAdminService {
@@ -80,9 +84,9 @@ public interface PackageAdminService {
     void archive(String code);
 
     /**
-     * 删除（仅 draft 可删，基础包不可删）。
+     * 删除（仅 draft 可删，基础包与模块预置套餐不可删）。
      *
-     * @throws PackageAdminException PACKAGE_NOT_FOUND / BASIC_PACKAGE_PROTECTED / INVALID_STATUS_TRANSITION
+     * @throws PackageAdminException PACKAGE_NOT_FOUND / BASIC_PACKAGE_PROTECTED / DECLARED_PACKAGE_PROTECTED / INVALID_STATUS_TRANSITION
      */
     void deletePackage(String code);
 
@@ -144,6 +148,8 @@ public interface PackageAdminService {
         private PackageStatus status;
         private Integer defaultTtlDays;
         private Boolean isSystem;
+        /** 来源业务模块编码（SPI 声明的预置套餐）；null=运营手工创建 */
+        private String sourceModule;
         private int moduleCount;
         private Instant createdAt;
         private Instant updatedAt;
@@ -169,6 +175,8 @@ public interface PackageAdminService {
         private PackageStatus status;
         private Integer defaultTtlDays;
         private Boolean isSystem;
+        /** 来源业务模块编码（SPI 声明的预置套餐）；null=运营手工创建 */
+        private String sourceModule;
         private List<String> moduleCodes;
         private int tenantCount;
         private Instant createdAt;

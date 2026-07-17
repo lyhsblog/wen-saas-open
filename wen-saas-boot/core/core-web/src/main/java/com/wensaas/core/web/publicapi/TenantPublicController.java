@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 仅暴露 5 个公开字段，不返回 mainAdminUserId / plans / 内部统计。
  *
  * <p>无鉴权（{@link PublicEndpoint}）；跨租户查询 / Logo 签发等编排下沉到
- * {@link TenantPublicQueryService}（架构审查 M11），本控制器仅做 HTTP 映射。
+ * {@link TenantPublicQueryService}，本控制器仅做 HTTP 映射。
  */
 @Tag(name = "public-tenant", description = "公开租户信息")
 @SecurityRequirements

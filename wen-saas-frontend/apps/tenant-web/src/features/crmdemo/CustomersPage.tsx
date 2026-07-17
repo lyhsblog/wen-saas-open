@@ -41,7 +41,7 @@ import { CustomerDetailDrawer } from './CustomerDetailDrawer';
 export function CustomersPage() {
   const { message, modal } = App.useApp();
 
-  // 草稿（编辑中）与已提交（驱动查询）分离：只有点「搜索」才提交（B 端交互规范）
+  // 草稿（编辑中）与已提交（驱动查询）分离：只有点「搜索」才提交
   const [statusDraft, setStatusDraft] = useState<string | undefined>(undefined);
   const [keywordDraft, setKeywordDraft] = useState('');
   const [ownerDraft, setOwnerDraft] = useState<string | undefined>(undefined);

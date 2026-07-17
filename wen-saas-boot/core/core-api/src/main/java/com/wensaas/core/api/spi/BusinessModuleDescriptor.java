@@ -8,6 +8,7 @@ import com.wensaas.core.api.spi.def.EventSubscription;
 import com.wensaas.core.api.spi.def.H5PageDef;
 import com.wensaas.core.api.spi.def.ImportEntityDef;
 import com.wensaas.core.api.spi.def.NotificationTemplateDef;
+import com.wensaas.core.api.spi.def.PackageDef;
 import com.wensaas.core.api.spi.def.PermissionDef;
 import com.wensaas.core.api.spi.def.TaskHandlerDef;
 
@@ -90,6 +91,17 @@ public interface BusinessModuleDescriptor {
      * 业务模块自己声明 + 拿到 Spring Bean 引用，无法通过纯扫描机制推断。
      */
     default List<TaskHandlerDef> taskHandlers() {
+        return List.of();
+    }
+
+    /**
+     * 声明业务模块的预置套餐包（开箱即用：模块装上后无需运营手工建包即可授予租户）。
+     *
+     * <p>code 按 {@code {module}.{pkg_name}} 命名空间约束（启动期校验）；启动期以
+     * insert-if-missing 语义落库，已存在的套餐整行不动（运营在套餐管理页的修改是权威），
+     * 详见 {@link PackageDef}。
+     */
+    default List<PackageDef> packages() {
         return List.of();
     }
 }

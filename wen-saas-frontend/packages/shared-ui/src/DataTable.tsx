@@ -216,9 +216,11 @@ export function DataTable<T extends object>({
           {...(onRowClick
             ? {
                 onRow: (record, index) => ({
-                  onClick: () => {
+                  onClick: (e) => {
                     // 正在划词复制时不跳转，让原生文本选择 + Ctrl/⌘+C 生效。
                     if (shouldSkipRowNav()) return;
+                    // 点击落在行内按钮/链接（操作列、Dropdown 触发器等）时不触发行导航。
+                    if ((e.target as HTMLElement).closest('button, a')) return;
                     onRowClick(record, index ?? 0);
                   },
                   style: { cursor: 'pointer' },

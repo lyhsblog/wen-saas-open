@@ -15,7 +15,7 @@ import lombok.ToString;
 import lombok.experimental.Accessors;
 
 /**
- * 租户侧操作审计日志查询（UX3）。
+ * 租户侧操作审计日志查询。
  *
  * <p>数据源 {@code sys_operation_log}（混合表 + 月分区）。租户隔离由 MyBatis-Plus 租户线拦截器
  * 自动注入 {@code tenant_id = 当前租户} 保证（该表不在 platform-only 白名单）。两种视角共用本服务、

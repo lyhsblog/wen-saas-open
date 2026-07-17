@@ -28,7 +28,7 @@ code {
   font-family: var(--font-mono, ui-monospace, 'SF Mono', Menlo, Consolas, monospace);
 }
 
-/* 数据导入预览：错误行底色（product/24 §五） */
+/* 数据导入预览：错误行底色 */
 .import-row-error > td {
   background: var(--danger-bg, oklch(0.97 0.02 25));
 }

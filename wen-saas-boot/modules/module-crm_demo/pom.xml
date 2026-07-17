@@ -7,12 +7,12 @@
     <parent>
         <groupId>com.wensaas</groupId>
         <artifactId>wen-saas-boot-modules</artifactId>
-        <version>0.9.0</version>
+        <version>0.9.1</version>
     </parent>
 
     <artifactId>wen-saas-boot-module-crm-demo</artifactId>
     <name>${project.artifactId}</name>
-    <description>CRM 客户管理 Demo 业务模块：底座「自定义字段 / 列偏好 / 数据权限」三能力的端到端验收载体</description>
+    <description>CRM 客户管理 Demo 业务模块：覆盖底座全部集成能力的官方样板，各扩展点接入均可对照参考</description>
 
     <dependencies>
         <dependency>

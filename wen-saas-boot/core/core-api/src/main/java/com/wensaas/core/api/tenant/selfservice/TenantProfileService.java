@@ -14,14 +14,14 @@ import lombok.ToString;
 import lombok.experimental.Accessors;
 
 /**
- * 租户后台 · 个人中心（原型 tenant-profile.jsx，PRD 03/09/22）。
+ * 租户后台 · 个人中心。
  *
  * <p>面向租户内的普通成员/主管理员，管理自己的账号信息、安全设置与登录设备；
  * 调用方为 {@code /api/v1/base/profile/**}，主体取自 {@code UserContext}，
  * 在租户上下文内（{@code tenant_id != 0}）。与运营侧 {@code OpsProfileService} 平行。
  *
  * <p>与运营侧差异：MFA 为 opt-in（非强制，可自助关闭）；无团队/数据范围的强制 ALL；
- * 通知偏好按 PRD 26 决策不在个人中心（由通知模板渠道开关统一控制）。
+ * 通知偏好不在个人中心（由通知模板渠道开关统一控制）。
  */
 public interface TenantProfileService {
 

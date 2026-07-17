@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
- * 基于 Redisson {@link RLock} 的分布式锁实现（架构审查 M1）。
+ * 基于 Redisson {@link RLock} 的分布式锁实现。
  *
  * <p>不传 leaseTime 的重载走 Redisson watchdog（持有期间后台自动续期）；传 leaseTime 的走固定租期。
  * 所有重载在同一线程内「获取—执行—释放」，{@code finally} 中以 {@link RLock#isHeldByCurrentThread()}

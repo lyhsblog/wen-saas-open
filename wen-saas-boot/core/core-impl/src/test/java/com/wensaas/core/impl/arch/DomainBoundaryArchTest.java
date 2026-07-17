@@ -51,7 +51,7 @@ class DomainBoundaryArchTest {
         return dot < 0 ? rest : rest.substring(0, dot);
     }
 
-    /** {@code SysUserMapper}（auth 主数据）只允许成员管理共享域 {auth, permission, ops, tenant} 直引（决策⑥）。 */
+    /** {@code SysUserMapper}（auth 主数据）只允许成员管理共享域 {auth, permission, ops, tenant} 直引。 */
     @Test
     void sysUserMapper_onlyMemberManagingDomains() {
         ArchRule rule = noClasses()
@@ -59,24 +59,24 @@ class DomainBoundaryArchTest {
                         "..impl.auth..", "..impl.permission..", "..impl.ops..", "..impl.tenant..")
                 .should().dependOnClassesThat()
                 .haveFullyQualifiedName("com.wensaas.core.impl.auth.user.SysUserMapper")
-                .because("跨域读 sys_user 须经 core-api/auth UserQueryService（56 §四/§十 决策⑥）");
+                .because("跨域读 sys_user 须经 core-api/auth UserQueryService，统一脱敏与缓存口径、保证读路径单一落点");
         rule.check(IMPL);
     }
 
-    /** {@code SysTenantMapper}（租户主数据）只允许 {tenant, ops} 直引（owner=tenant + ops 管理/报表豁免，决策⑦）。 */
+    /** {@code SysTenantMapper}（租户主数据）只允许 {tenant, ops} 直引（owner=tenant + ops 管理/报表豁免）。 */
     @Test
     void sysTenantMapper_onlyTenantAndOps() {
         ArchRule rule = noClasses()
                 .that().resideOutsideOfPackages("..impl.tenant..", "..impl.ops..")
                 .should().dependOnClassesThat()
                 .haveFullyQualifiedName("com.wensaas.core.impl.tenant.SysTenantMapper")
-                .because("跨域读 sys_tenant 须经 core-api/tenant TenantQueryService（56 §八/§十 决策⑦）");
+                .because("跨域读 sys_tenant 须经 core-api/tenant TenantQueryService，避免各域自读造成口径分裂");
         rule.check(IMPL);
     }
 
     /**
      * {@code SysUserMapper} 的<b>写方法</b>（insert/updateById/update/delete）只允许 {@code UserCommandService} 调用
-     * （决策⑥ 写收敛）。读方法不限（sanctioned 成员管理域仍直接读）。这把「单一写入口」从约定变为结构约束。
+     * （写收敛）。读方法不限（sanctioned 成员管理域仍直接读）。这把「单一写入口」从约定变为结构约束。
      */
     @Test
     void sysUserMapper_writeMethods_onlyUserCommandService() {
@@ -93,7 +93,7 @@ class DomainBoundaryArchTest {
         ArchRule rule = noClasses()
                 .that().doNotHaveFullyQualifiedName("com.wensaas.core.impl.auth.user.UserCommandService")
                 .should().callMethodWhere(userMapperWrite)
-                .because("sys_user 写一律经 auth/UserCommandService（56 §五 决策⑥），保证写后失效有唯一落点");
+                .because("sys_user 写一律经 auth/UserCommandService，保证写后失效有唯一落点");
         rule.check(IMPL);
     }
 
@@ -129,7 +129,7 @@ class DomainBoundaryArchTest {
         ArchRule rule = FreezingArchRule.freeze(
                 classes().that().resideInAPackage("..impl..")
                         .should(notDependOnForeignDomainMapper)
-                        .as("Mapper 域私有（全域，56 §三）——冻结现状、只拦新增跨域 Mapper 依赖"));
+                        .as("Mapper 域私有（全域）——冻结现状、只拦新增跨域 Mapper 依赖"));
         rule.check(IMPL);
     }
 }

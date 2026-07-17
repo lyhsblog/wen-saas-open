@@ -15,7 +15,7 @@ interface Props {
 }
 
 /**
- * 枚举（enum）自定义字段的字典下拉。按 refDictCode 拉字典项，value=字典项 code、灰显 code（B 端交互规范 §七.6(e)）。
+ * 枚举（enum）自定义字段的字典下拉。按 refDictCode 拉字典项，value=字典项 code、灰显 code。
  * 拉全量（含停用）以便已选的停用项仍能回显其名称，但停用项标 disabled 不可新选。
  * 表单与筛选两处共用：表单内由父 antd Form.Item 注入 value/onChange，筛选区显式传入。
  */

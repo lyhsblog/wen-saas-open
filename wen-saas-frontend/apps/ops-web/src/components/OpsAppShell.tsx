@@ -19,7 +19,16 @@ export function OpsAppShell({ children }: { children: ReactNode }) {
   const profileBasic = useBasicQuery();
   const menus = useMenus();
 
-  const menu = useMemo(() => flattenNavTree(menus), [menus]);
+  // 「租户管理」是体验动线的起点（开通租户 → 进租户端体验业务功能），挂常显引导标帮首次访问者定位。
+  const menu = useMemo(
+    () =>
+      flattenNavTree(menus).map((item) =>
+        'key' in item && item.key === '/tenants'
+          ? { ...item, suffix: <TenantEntryGuideTag /> }
+          : item,
+      ),
+    [menus],
+  );
   const selectedKey = selectNavKey(menu, location.pathname, '/tenants');
 
   return (
@@ -54,6 +63,29 @@ export function OpsAppShell({ children }: { children: ReactNode }) {
     >
       <WatermarkLayer username={user?.username ?? null}>{children}</WatermarkLayer>
     </AppShell>
+  );
+}
+
+/** 侧栏「租户管理」右侧的体验引导标：暗色侧栏上用品牌色药丸 + 呼吸光晕（keyframes 在 styles.css）。 */
+function TenantEntryGuideTag() {
+  return (
+    <span
+      title="在这里开通租户，即可进入租户端体验业务功能"
+      style={{
+        fontSize: 10,
+        fontWeight: 600,
+        lineHeight: '14px',
+        padding: '1px 7px',
+        borderRadius: 'var(--r-pill)',
+        color: '#fff',
+        background: 'var(--brand)',
+        whiteSpace: 'nowrap',
+        flexShrink: 0,
+        animation: 'ops-guide-pulse 2s ease-in-out infinite',
+      }}
+    >
+      体验入口
+    </span>
   );
 }
 

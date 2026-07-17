@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Instant;
 
 /**
- * 当前用户 · 我的操作记录（成员看自己，UX3）。
+ * 当前用户 · 我的操作记录（成员看自己）。
  *
  * <p>无需特殊权限，任意已登录成员可看；复用 {@link TenantOperationLogQueryService} 并强制
  * {@code restrictOperatorId = 当前用户}，叠加租户线拦截器的租户隔离，越权不可见。

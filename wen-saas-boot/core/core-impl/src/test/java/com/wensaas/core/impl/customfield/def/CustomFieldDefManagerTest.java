@@ -237,7 +237,7 @@ class CustomFieldDefManagerTest {
 
     @Test
     void dropField_indexed_withOtherTenantPeer_skipsPhysicalDrop_butDecsQuota() {
-        // 架构审查 M13：共享索引仍有其他租户在用 → 不物理 DROP，但本租户额度照常释放。
+        // 共享索引仍有其他租户在用 → 不物理 DROP，但本租户额度照常释放。
         when(defMapper.selectById(100L)).thenReturn(rowAt(100L, 9001L, "crm.customer", "cf_src", true));
         when(defMapper.countOtherIndexedPeers("crm.customer", "cf_src", 100L)).thenReturn(1L);
         manager.dropField(9001L, 100L);

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 
 /**
- * 定时任务「多实例单跑」守卫（架构审查 M5）。
+ * 定时任务「多实例单跑」守卫。
  *
  * <p>Quartz JDBC 集群存储已保证一次触发只有一个节点认领，本守卫是执行体外的
  * <b>第二道兜底</b>——底座对外开源、下游部署不可控（两套部署误指不同 quartz schema、

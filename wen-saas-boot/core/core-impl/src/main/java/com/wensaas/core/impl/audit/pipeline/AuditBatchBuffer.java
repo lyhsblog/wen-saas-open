@@ -33,7 +33,7 @@ public abstract class AuditBatchBuffer<T> {
     private final int maxQueueSize;
     private final LinkedBlockingQueue<T> queue;
     private final AtomicLong lastFlushAt = new AtomicLong(System.currentTimeMillis());
-    /** 因队列满 / flush 失败回队列失败而丢弃的累计事件数（可观测 + 告警，架构审查 M14）。 */
+    /** 因队列满 / flush 失败回队列失败而丢弃的累计事件数（可观测 + 告警）。 */
     private final AtomicLong droppedCount = new AtomicLong();
 
     private ScheduledExecutorService scheduler;
@@ -118,7 +118,7 @@ public abstract class AuditBatchBuffer<T> {
             flush(batch);
             lastFlushAt.set(System.currentTimeMillis());
         } catch (RuntimeException e) {
-            // flush 失败不静默丢（架构审查 M14）：尽量回队列下次重试；队列已满放不回的才计为丢弃并告警。
+            // flush 失败不静默丢：尽量回队列下次重试；队列已满放不回的才计为丢弃并告警。
             // 典型 DB 抖动可在恢复后重放；极端持续失败时由有界队列兜底防 OOM。
             int requeued = 0;
             int dropped = 0;

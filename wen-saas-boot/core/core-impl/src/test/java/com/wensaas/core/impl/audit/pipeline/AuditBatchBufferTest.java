@@ -96,7 +96,7 @@ class AuditBatchBufferTest {
 
     @Test
     void offer_whenQueueFull_dropsAndCounts() {
-        // 不 start() → 无后台 drain；用小容量(3)的 4 参构造触发满队列丢弃（架构审查 M14）
+        // 不 start() → 无后台 drain；用小容量(3)的 4 参构造触发满队列丢弃
         AuditBatchBuffer<AuditEvent> buffer = new AuditBatchBuffer<>(
                 "test", 2, Duration.ofMinutes(10), 3) {
             @Override

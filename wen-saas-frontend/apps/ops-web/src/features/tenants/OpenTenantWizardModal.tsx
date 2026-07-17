@@ -543,7 +543,7 @@ function TenantCodePreview({ form }: { form: FormInstance<FormData> }) {
           <code style={{ fontFamily: 'var(--font-mono)' }}>{tenantWebHost(trimmed)}</code>
         </>
       ) : (
-        '将作为租户访问子域名，如 acme-corp.saas.xuwen.site'
+        `将作为租户访问子域名，如 ${tenantWebHost('acme-corp')}`
       )}
     </Typography.Text>
   );

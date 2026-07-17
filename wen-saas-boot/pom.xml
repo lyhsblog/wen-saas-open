@@ -6,7 +6,7 @@
 
     <groupId>com.wensaas</groupId>
     <artifactId>wen-saas-boot</artifactId>
-    <version>0.9.0</version>
+    <version>0.9.1</version>
     <packaging>pom</packaging>
 
     <name>Wen SaaS Boot</name>
@@ -46,7 +46,7 @@
         <!-- gRPC 客户端单独锁版：starter 2.3.6 传递的是 5.0.7，其 telemetry stream 与较新 Proxy 握手会
              报 "Stream is already completed"；升到 5.2.0（client-java 最新线）修复，向后兼容 5.x broker。 -->
         <rocketmq-client-java.version>5.2.0</rocketmq-client-java.version>
-        <!-- 分布式协调（架构审查 M1：统一 Redis 锁 + 去重基建）。
+        <!-- 分布式协调（统一 Redis 锁 + 去重基建）。
              redisson-spring-boot-starter 4.4.0 针对 Spring Boot 4.0.6 构建，作为唯一 Redis 工厂
              替换 Lettuce（透传 spring-data-redis + redisson-spring-data，StringRedisTemplate 不变）。 -->
         <redisson.version>4.4.0</redisson.version>
@@ -65,7 +65,7 @@
         <maven-surefire-plugin.version>3.5.0</maven-surefire-plugin.version>
         <maven-jar-plugin.version>3.4.2</maven-jar-plugin.version>
         <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
-        <!-- 覆盖率（架构审查 H5）。0.8.14+ 起官方支持 JDK 25；0.8.15 为 Maven Central 最新正式版
+        <!-- 覆盖率。0.8.14+ 起官方支持 JDK 25；0.8.15 为 Maven Central 最新正式版
              （0.8.16 仅为开发快照、未发布，故不用）。 -->
         <jacoco.version>0.8.15</jacoco.version>
     </properties>
@@ -252,7 +252,7 @@
         </pluginManagement>
 
         <!--
-          覆盖率插桩对所有子模块生效（架构审查 H5）：
+          覆盖率插桩对所有子模块生效：
           · prepare-agent —— 注入 jacoco agent（设置 surefire argLine）
           · report（test 阶段）—— 每次跑测试后生成 target/site/jacoco 报告
           · check（verify 阶段）—— 覆盖率门禁；阈值先设 0（仅打通管道、不阻断），

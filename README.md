@@ -8,9 +8,13 @@ wen-saas-frontend/   前端（运营后台 / 租户后台 / H5 三端，React + 
 open-docs/           使用与扩展文档（从这里开始）
 ```
 
-## 快速开始
+## 快速开始（非程序员版，适用于所有人）
 
-见 [`open-docs/快速开始.md`](open-docs/快速开始.md)——用 docker compose 拉起 PG / Redis / RocketMQ，构建并启动后端与前端三端。
+不会写代码也能完整体验：见 [`open-docs/快速开始(非程序员).md`](<open-docs/快速开始(非程序员).md>)——让你的 AI 助手（QClaw 等）把系统部署到你电脑上，再按一份现成需求书开发一个新业务模块，你只负责提需求和验收。
+
+## 快速开始（程序员）
+
+见 [`open-docs/快速开始(程序员).md`](<open-docs/快速开始(程序员).md>)——用 docker compose 拉起 PG / Redis / RocketMQ，构建并启动后端与前端三端。
 
 ## 基于底座开发业务
 

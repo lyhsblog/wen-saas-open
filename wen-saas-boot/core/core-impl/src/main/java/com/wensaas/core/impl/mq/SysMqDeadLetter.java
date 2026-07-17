@@ -9,7 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * {@code sys_mq_dead_letter} 表实体（MQ 死信兜底，架构审查 M7）。
+ * {@code sys_mq_dead_letter} 表实体（MQ 死信兜底）。
  *
  * <p>两条来源（均由消费链路内 {@link DefaultMqConsumeSupport} 落库）：
  * <ul>

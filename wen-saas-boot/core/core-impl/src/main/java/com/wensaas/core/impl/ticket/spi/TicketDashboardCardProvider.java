@@ -19,7 +19,7 @@ import java.util.List;
  * 卡片由 {@code BaseBusinessModuleDescriptor} 声明）。
  *
  * <p>统计当前登录成员（submitter=self）名下工单的 待处理 / 处理中 / 本月解决 计数，
- * 对应原型 {@code tenant-screens.jsx} 的「工单状态分布」。租户线由拦截器自动注入，无需跨租户。
+ * 「工单状态分布」卡片。租户线由拦截器自动注入，无需跨租户。
  */
 @Component
 public class TicketDashboardCardProvider implements DashboardCardProvider {

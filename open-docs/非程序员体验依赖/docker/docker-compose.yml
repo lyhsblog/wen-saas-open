@@ -1,0 +1,225 @@
+# ============================================================
+# 全容器一键运行（编译 + 运行都在 Docker 里，本机无需 JDK / Maven / Node）
+#
+#   cd open-docs/非程序员体验依赖/docker && docker compose up -d --build
+#
+# 使用说明见同目录上一级的 Docker全容器运行.md；所有 docker compose 命令都在本目录执行
+# （docker compose 从当前目录向上查找配置文件；项目名固定为 wen-saas-all，状态一致）。
+#
+# 面向开发者的宿主机直跑模式（后端/前端跑在本机）见 open-docs/快速开始(程序员).md，
+# 其中间件编排在 wen-saas-boot/local_environment/——两套编排相互独立，
+# 项目名、网络、数据卷均不同，但都会用到 8080/5173-5175，同一台机器别同时跑两套应用。
+#
+# 形态与生产一致：后端单 jar + 前端三份静态站（nginx 反代接口）。改代码后重建对应服务：
+#   后端  docker compose up -d --build backend
+#   前端  docker compose up -d --build frontend-ops|frontend-tenant|frontend-h5
+#
+# 端口占用：只有 8080（后端）与 5173/5174/5175（前端三端）映射到宿主机；
+# PostgreSQL / Redis / RocketMQ 全部只在 compose 内部网络互联，不占宿主机端口。
+# 数据全部落 named volume，彻底重置用 `docker compose down -v`。
+# ============================================================
+name: wen-saas-all
+
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      - POSTGRES_PASSWORD=root
+      # 首次初始化时自动建好后端使用的 wen_saas 库（表结构由后端启动时 Flyway 自动迁移）
+      - POSTGRES_DB=wen_saas
+      - TZ=Asia/Shanghai
+    volumes:
+      - pg-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d wen_saas']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:8.0-bookworm
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass root
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli -a root ping | grep -q PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  rocketmq-namesrv:
+    image: apache/rocketmq:5.3.2
+    restart: unless-stopped
+    environment:
+      - JAVA_OPT_EXT=-Xms256M -Xmx256M
+    command: sh mqnamesrv
+
+  # broker 对外通告地址 = 容器服务名 rocketmq-broker（见同目录 broker.conf）。
+  # 全部客户端（proxy、后端）都在同一 compose 网络内，无需 host.docker.internal。
+  rocketmq-broker:
+    image: apache/rocketmq:5.3.2
+    restart: unless-stopped
+    # 镜像默认用户 rocketmq(3000) 写不了 root 属主的 named volume（store），以 root 运行
+    user: root
+    environment:
+      - NAMESRV_ADDR=rocketmq-namesrv:9876
+      - JAVA_OPT_EXT=-Xms512M -Xmx1G
+    volumes:
+      - rocketmq-broker-data:/home/rocketmq/store
+      - ./broker.conf:/home/rocketmq/broker.conf
+    depends_on:
+      - rocketmq-namesrv
+    command: sh mqbroker -c /home/rocketmq/broker.conf
+
+  # 独立 Proxy（CLUSTER 模式）。后端走它的 gRPC 8081（compose 内部网络，不映射宿主机）。
+  rocketmq-proxy:
+    image: apache/rocketmq:5.3.2
+    restart: unless-stopped
+    environment:
+      - NAMESRV_ADDR=rocketmq-namesrv:9876
+      - JAVA_OPT_EXT=-Xmx1G
+    depends_on:
+      - rocketmq-broker
+      - rocketmq-namesrv
+    command: sh mqproxy
+
+  # 一次性容器：等 broker 注册后预建后端消费者订阅的 topic 然后退出（`ps` 里看不到属正常）。
+  # RocketMQ 5.x gRPC 消费者启动期严格校验 topic 路由，必须先于后端建好。
+  rocketmq-topic-init:
+    image: apache/rocketmq:5.3.2
+    restart: 'no'
+    depends_on:
+      - rocketmq-broker
+    entrypoint:
+      - sh
+      - -c
+      - |
+        set -e
+        echo "waiting for broker registered on namesrv...";
+        for i in $$(seq 1 60); do
+          if sh mqadmin clusterList -n rocketmq-namesrv:9876 2>/dev/null | grep -q broker-a; then
+            echo "broker is up"; break;
+          fi
+          sleep 2;
+        done
+        for t in wen_audit_operation wen_audit_login wen_notify_station wen_notify_email \
+                 wen_notify_sms wen_notify_im wen_task_execute wen_api_call_log \
+                 wen_event wen_webhook_send; do
+          sh mqadmin updateTopic -n rocketmq-namesrv:9876 -c DefaultCluster -t $$t;
+        done
+        echo "all topics ready";
+
+  # 后端：镜像内 Maven 编译打包（见同目录 backend.Dockerfile）。
+  # 改了后端代码后重建重启：docker compose up -d --build backend
+  backend:
+    build:
+      context: ../../../wen-saas-boot
+      # dockerfile 相对 context 解析；编排相关文件统一放本目录，不侵入后端源码目录
+      dockerfile: ../open-docs/非程序员体验依赖/docker/backend.Dockerfile
+      args:
+        # Maven 依赖镜像源，默认阿里云（与 Dockerfile 内默认值一致）；需要官方源时
+        # 构建前设环境变量 MAVEN_MIRROR=https://repo.maven.apache.org/maven2
+        MAVEN_MIRROR: ${MAVEN_MIRROR:-https://maven.aliyun.com/repository/public}
+    restart: unless-stopped
+    ports:
+      - '8080:8080'
+    environment:
+      # 跑 dev profile，仅把连接地址改为 compose 服务名（Spring 环境变量覆盖同名配置项）
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/wen_saas
+      - SPRING_DATA_REDIS_HOST=redis
+      - ROCKETMQ_PRODUCER_ENDPOINTS=rocketmq-proxy:8081
+      - ROCKETMQ_PUSH_CONSUMER_ENDPOINTS=rocketmq-proxy:8081
+      # 上传文件落容器内固定路径，对应 backend-files 数据卷
+      - WEN_SAAS_BOOT_FILE_LOCAL_ROOT=/app/data/files
+      - TZ=Asia/Shanghai
+    volumes:
+      - backend-files:/app/data/files
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rocketmq-proxy:
+        condition: service_started
+      rocketmq-topic-init:
+        condition: service_completed_successfully
+
+  # 前端三端：镜像内 pnpm 构建静态产物，nginx 提供站点并把 /api、/actuator 反代到后端
+  # （见同目录 frontend.Dockerfile，三端共用、构建参数区分）。
+  # VITE_* 构建参数把域名口径定为本地地址（Vite 里进程环境变量优先于 .env 文件，
+  # 覆盖 .env.production 的线上域名）。改了前端代码后重建对应端即可。
+  frontend-ops:
+    build:
+      context: ../../../wen-saas-frontend
+      dockerfile: ../open-docs/非程序员体验依赖/docker/frontend.Dockerfile
+      args:
+        BUILD_SCRIPT: build:ops
+        DIST_DIR: ops-web
+        # npm 依赖镜像源，默认 npmmirror（与 Dockerfile 内默认值一致）；需要官方源时
+        # 构建前设环境变量 NPM_REGISTRY=https://registry.npmjs.org
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
+        # 运营端生成的租户端 / H5 端链接用本地地址
+        VITE_TENANT_WEB_ORIGIN: http://localhost:5174
+        VITE_H5_WEB_ORIGIN: http://m.localhost:5175
+    restart: unless-stopped
+    volumes:
+      - ./nginx.conf:/etc/nginx/templates/default.conf.template:ro
+    environment:
+      # 容器内监听端口与宿主机映射保持一致（与本地模式同端口，nginx 按模板渲染）
+      - NGINX_PORT=5173
+    ports:
+      - '5173:5173'
+    depends_on:
+      backend:
+        condition: service_started
+
+  frontend-tenant:
+    build:
+      context: ../../../wen-saas-frontend
+      dockerfile: ../open-docs/非程序员体验依赖/docker/frontend.Dockerfile
+      args:
+        BUILD_SCRIPT: build:tenant
+        DIST_DIR: tenant-web
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
+        # 租户端子域基础域（{租户编码}.localhost）
+        VITE_TENANT_BASE_DOMAIN: localhost
+    restart: unless-stopped
+    volumes:
+      - ./nginx.conf:/etc/nginx/templates/default.conf.template:ro
+    environment:
+      - NGINX_PORT=5174
+    ports:
+      - '5174:5174'
+    depends_on:
+      backend:
+        condition: service_started
+
+  frontend-h5:
+    build:
+      context: ../../../wen-saas-frontend
+      dockerfile: ../open-docs/非程序员体验依赖/docker/frontend.Dockerfile
+      args:
+        BUILD_SCRIPT: build:h5
+        DIST_DIR: h5
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
+        # H5 端子域基础域（{租户编码}.m.localhost）
+        VITE_TENANT_BASE_DOMAIN: m.localhost
+    restart: unless-stopped
+    volumes:
+      - ./nginx.conf:/etc/nginx/templates/default.conf.template:ro
+    environment:
+      - NGINX_PORT=5175
+    ports:
+      - '5175:5175'
+    depends_on:
+      backend:
+        condition: service_started
+
+volumes:
+  pg-data:
+  redis-data:
+  rocketmq-broker-data:
+  backend-files:

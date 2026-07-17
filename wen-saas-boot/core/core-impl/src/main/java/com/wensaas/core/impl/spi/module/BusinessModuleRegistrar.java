@@ -4,6 +4,7 @@ import com.wensaas.core.api.spi.BusinessModuleDescriptor;
 import com.wensaas.core.impl.dict.DictSpiSynchronizer;
 import com.wensaas.core.impl.notification.NotificationSpiSynchronizer;
 import com.wensaas.core.impl.pkg.ModuleApiRouteRegistry;
+import com.wensaas.core.impl.pkg.PackageSpiSynchronizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -39,6 +40,8 @@ import com.wensaas.core.impl.spi.registry.TaskHandlerRegistry;
  *   <li>{@link ModuleTableValidator} 表归属 + DB 存在性校验（扫描 MyBatis-Plus entity）</li>
  *   <li>按拓扑序逐个注册到各内存 Registry</li>
  *   <li>{@link BusinessModuleDbSynchronizer} 同步 {@code sys_business_module} 表</li>
+ *   <li>{@link PackageSpiSynchronizer} 同步 {@code sys_package} / {@code sys_package_module}
+ *       （在 sys_business_module 落库之后，保证 module_code 语义完整）</li>
  *   <li>{@link DictSpiSynchronizer} 同步 {@code sys_dict_group} / {@code sys_dict_item}（如装配了字典框架）</li>
  * </ol>
  */
@@ -65,6 +68,7 @@ public class BusinessModuleRegistrar implements SmartInitializingSingleton, Appl
     private final DataPermissionTableRegistry dataPermissionTableRegistry;
     private final TaskHandlerRegistry taskHandlerRegistry;
     private final ModuleApiRouteRegistry apiRouteRegistry;
+    private final ObjectProvider<PackageSpiSynchronizer> packageSynchronizerProvider;
     private final ObjectProvider<DictSpiSynchronizer> dictSynchronizerProvider;
     private final ObjectProvider<NotificationSpiSynchronizer> notificationSynchronizerProvider;
 
@@ -88,6 +92,7 @@ public class BusinessModuleRegistrar implements SmartInitializingSingleton, Appl
                                     DataPermissionTableRegistry dataPermissionTableRegistry,
                                     TaskHandlerRegistry taskHandlerRegistry,
                                     ModuleApiRouteRegistry apiRouteRegistry,
+                                    ObjectProvider<PackageSpiSynchronizer> packageSynchronizerProvider,
                                     ObjectProvider<DictSpiSynchronizer> dictSynchronizerProvider,
                                     ObjectProvider<NotificationSpiSynchronizer> notificationSynchronizerProvider) {
         this.properties = properties;
@@ -108,6 +113,7 @@ public class BusinessModuleRegistrar implements SmartInitializingSingleton, Appl
         this.dataPermissionTableRegistry = dataPermissionTableRegistry;
         this.taskHandlerRegistry = taskHandlerRegistry;
         this.apiRouteRegistry = apiRouteRegistry;
+        this.packageSynchronizerProvider = packageSynchronizerProvider;
         this.dictSynchronizerProvider = dictSynchronizerProvider;
         this.notificationSynchronizerProvider = notificationSynchronizerProvider;
     }
@@ -153,6 +159,11 @@ public class BusinessModuleRegistrar implements SmartInitializingSingleton, Appl
         }
 
         dbSynchronizer.sync(sortedEnabled);
+
+        PackageSpiSynchronizer pkgSync = packageSynchronizerProvider.getIfAvailable();
+        if (pkgSync != null) {
+            pkgSync.sync(sortedEnabled);
+        }
 
         DictSpiSynchronizer dictSync = dictSynchronizerProvider.getIfAvailable();
         if (dictSync != null) {

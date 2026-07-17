@@ -24,6 +24,7 @@ import com.wensaas.core.api.spi.def.UniqueScope;
 import com.wensaas.core.api.spi.def.ImportEntityDef;
 import com.wensaas.core.api.spi.def.ImportFieldDef;
 import com.wensaas.core.api.spi.def.NotificationTemplateDef;
+import com.wensaas.core.api.spi.def.PackageDef;
 import com.wensaas.core.api.spi.def.PermissionDef;
 import com.wensaas.core.api.spi.def.ReferenceDef;
 import com.wensaas.core.api.spi.def.ReferenceMatch;
@@ -39,7 +40,9 @@ import java.util.Map;
 /**
  * CRM 客户管理 Demo 业务模块描述符。
  *
- * <p>这是 {@code modules/} 下第一个真实业务模块，作为底座三块能力的端到端验收载体：
+ * <p>这是官方样板业务模块：底座全部 SPI 扩展点与集成能力在此都有真实用例
+ * （自定义字段 / 列偏好 / 数据权限 / 字典 / 工作台卡片 / 通知 / 导入导出 / 开放 API /
+ * 领域事件 / 定时任务 / H5 / 预置套餐），外部开发者按各扩展点方法对照接入。例如：
  * <ul>
  *   <li>自定义字段：{@link #customFieldObjects()} 声明 {@code crm_demo.customer} 宿主对象</li>
  *   <li>数据权限：{@link #dataPermissionTables()} 声明 {@code crm_demo_customer} 按 负责人/归属部门 过滤</li>
@@ -76,6 +79,9 @@ public class CrmDemoModule implements BusinessModuleDescriptor, ExportObjectCont
     public static final String IMPORT_CUSTOMER = "crm_demo.customer";
     public static final String IMPORT_CUSTOMER_HANDLER = "crm_demo.task.import.customer";
 
+    /** 预置套餐 code（开箱即用：启动落库并上架，开通即含本模块全部能力）。 */
+    public static final String PKG_STARTER = "crm_demo.starter";
+
     /** 导出对象 code（与 ExportDataProvider.objectCode 按字符串对齐；带前缀防与内建/他模块碰撞）。 */
     public static final String EXPORT_CUSTOMER = "crm_demo_customer";
     /** 「我的客户」导出对象：服务端强制负责人=申请人本人（与 GET /mine 同语义），权限锚定 view。 */
@@ -86,7 +92,7 @@ public class CrmDemoModule implements BusinessModuleDescriptor, ExportObjectCont
         return new ModuleMetadata(
                 "crm_demo",
                 "客户管理 Demo",
-                "演示自定义字段 / 列偏好 / 数据权限三能力的样板业务模块",
+                "覆盖底座全部集成能力的官方样板业务模块，各项能力接入均可对照参考",
                 "1.0.0",
                 null,
                 List.of());
@@ -229,6 +235,17 @@ public class CrmDemoModule implements BusinessModuleDescriptor, ExportObjectCont
                         "转介绍"),
                 new ImportFieldDef("负责人手机/邮箱", "owner", FieldType.STRING, false,
                         null, UniqueScope.NONE, null, "13800138000"))));
+    }
+
+    @Override
+    public List<PackageDef> packages() {
+        // 预置套餐 insert-if-missing：首次启动落库并上架，之后归运营维护
+        // （套餐管理页可改名/加模块/下架，重启不覆盖；不可物理删除，防重启复活）
+        return List.of(PackageDef.of(
+                PKG_STARTER, "客户管理 Demo 入门包",
+                "客户管理 Demo 模块的预置套餐：开通即含客户管理全部功能。该模块完整集成底座能力——"
+                        + "自定义字段 / 列偏好 / 数据权限 / 数据字典 / 工作台卡片 / 站内信通知 / "
+                        + "导入导出 / 开放 API / 领域事件 / 定时任务 / H5"));
     }
 
     @Override

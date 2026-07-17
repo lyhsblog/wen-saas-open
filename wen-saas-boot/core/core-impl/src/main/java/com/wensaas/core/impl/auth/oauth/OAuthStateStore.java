@@ -6,7 +6,7 @@ import java.time.Duration;
 import java.util.UUID;
 
 /**
- * OAuth 登录 CSRF {@code state} 一次性存储（架构审查 M4）。
+ * OAuth 登录 CSRF {@code state} 一次性存储。
  *
  * <p>Key 形如 {@code wen-saas-boot:oauth-state:{state}}，value=绑定的 {@code provider}，TTL=10min。
  *

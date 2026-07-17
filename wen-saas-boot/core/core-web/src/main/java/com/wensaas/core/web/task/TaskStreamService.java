@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * 终态推最后一帧后关闭。后台线程不持有请求 ThreadLocal，故每次读取用
  * {@link TenantContext#callAs} 重建租户上下文（MP TenantLine 据此隔离）。
  *
- * <p><b>并发模型（架构审查 M15）</b>：单线程 {@code scheduler} 只负责「到点分发」，每帧真正的阻塞工作
+ * <p><b>并发模型</b>：单线程 {@code scheduler} 只负责「到点分发」，每帧真正的阻塞工作
  * （Redis+DB 读 + {@code emitter.send}）提交到<b>虚拟线程</b>执行器，故并发流数不再受固定线程池上限制约、
  * 慢 IO 不会相互阻塞累积推送延迟。每条流用「固定延迟自重排」（上一帧完成后再排下一帧）天然串行化相邻帧，
  * 无需 in-flight 守卫；流结束（终态 / 超时 / 客户端断开）后 {@code done} 置位，已排队的下一帧空转跳过。

@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.wensaas</groupId>
         <artifactId>wen-saas-boot-core</artifactId>
-        <version>0.9.0</version>
+        <version>0.9.1</version>
     </parent>
 
     <artifactId>wen-saas-boot-core-impl</artifactId>
@@ -82,7 +82,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- 缓存 / 会话 / 限流 / 分布式协调（架构审查 M1）。
+        <!-- 缓存 / 会话 / 限流 / 分布式协调。
              redisson-spring-boot-starter 作为唯一 Redis 工厂：透传 spring-data-redis（StringRedisTemplate 不变）
              + redisson-spring-data（RedissonConnectionFactory）+ redisson core（RLock 等）。
              排除 lettuce-core，使 Redisson 成为唯一 RedisConnectionFactory；连接配置仍读 spring.data.redis.*。 -->

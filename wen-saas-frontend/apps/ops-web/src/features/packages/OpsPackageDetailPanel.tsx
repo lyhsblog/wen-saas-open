@@ -126,6 +126,9 @@ export function OpsPackageDetailPanel({ code, onClose, onDeleted, onSelect }: Pr
                 <span style={{ fontWeight: 600, fontSize: 18 }}>{data.name}</span>
                 <StatusPill badge={packageStatusBadge(data.status)} />
                 {data.isSystem && <CountChip tone="brand">系统</CountChip>}
+                {data.sourceModule && (
+                  <CountChip tone="brand">来自模块 · {moduleName(data.sourceModule)}</CountChip>
+                )}
               </div>
               <div
                 style={{
@@ -298,9 +301,12 @@ export function OpsPackageDetailPanel({ code, onClose, onDeleted, onSelect }: Pr
               上架
             </Button>
             {editBtn}
-            <Button danger onClick={confirmDelete}>
-              删除
-            </Button>
+            {/* 模块预置套餐不可物理删除（重启会重新生成，服务端兜底），仅运营手工包可删 */}
+            {!data.sourceModule && (
+              <Button danger onClick={confirmDelete}>
+                删除
+              </Button>
+            )}
           </>
         );
       case 'ACTIVE':

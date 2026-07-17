@@ -114,7 +114,7 @@ class OAuthLoginIdentityProviderTest {
 
     @Test
     void invalidState_throwsBadCredentials_andDoesNotExchange() {
-        // state 校验失败（缺失/失效/不匹配）→ 拒绝，且不消耗 authCode（不调 exchange）。架构审查 M4。
+        // state 校验失败（缺失/失效/不匹配）→ 拒绝，且不消耗 authCode（不调 exchange）。
         LoginCredentials.OAuthCredentials bad =
                 new LoginCredentials.OAuthCredentials("dingtalk", "code-1", "forged");
         when(stateStore.consume("dingtalk", "forged")).thenReturn(false);

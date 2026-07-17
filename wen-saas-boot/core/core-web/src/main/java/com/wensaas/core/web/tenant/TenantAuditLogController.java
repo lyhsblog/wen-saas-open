@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Instant;
 
 /**
- * 租户后台 · 审计日志（看本租户全员的操作审计，UX3）。
+ * 租户后台 · 审计日志（看本租户全员的操作审计）。
  *
  * <p>门控 {@code audit.view}（主管理员恒有，可赋合规 / 安全等角色）。数据源 {@code sys_operation_log}，
  * 租户隔离由租户线拦截器自动注入 {@code tenant_id = 当前租户} 保证。

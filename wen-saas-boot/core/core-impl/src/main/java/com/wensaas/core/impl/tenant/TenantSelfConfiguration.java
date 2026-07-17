@@ -77,7 +77,7 @@ public class TenantSelfConfiguration {
     }
 
     /**
-     * 租户操作审计日志查询（UX3）。复用审计渲染器 {@link AuditChangeRenderer}（由 OpsTeamConfiguration
+     * 租户操作审计日志查询。复用审计渲染器 {@link AuditChangeRenderer}（由 OpsTeamConfiguration
      * 装配）拼 ③ 数据变更；租户隔离交给租户线拦截器。
      */
     @Bean

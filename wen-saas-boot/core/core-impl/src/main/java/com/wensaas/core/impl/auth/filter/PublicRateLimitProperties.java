@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 公开端点 IP 级频控配置（架构审查低优项）。
+ * 公开端点 IP 级频控配置。
  *
  * <p>登录已有「失败锁定」护栏，但公开密码重置 / OAuth 端点（未认证、无账号维度）此前无独立频控，
  * 易被脚本枚举 token / 刷渠道授权。此处按客户端 IP 在滑动窗口内限流。

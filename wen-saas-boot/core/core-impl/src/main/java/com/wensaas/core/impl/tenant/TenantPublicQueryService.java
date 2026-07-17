@@ -13,7 +13,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 
 /**
- * 公开租户信息查询编排（架构审查 M11）。
+ * 公开租户信息查询编排。
  *
  * <p>从 {@code TenantPublicController} 抽回 core-impl：跨租户按 code / 旧路由位别名解析租户，并实时签发
  * Logo 下载 URL。{@code @CrossTenantQuery} 收到方法级（保持窄作用域），主查询只圈这次解析。

@@ -314,7 +314,7 @@ function seedOpsNotifyPrefs(): Record<
   NotificationCategory,
   Partial<Record<NotificationChannel, boolean>>
 > {
-  // STATION 始终 true（前端 + 后端均强制）；EMAIL/SMS 按 PRD §3.6 示意默认勾选。
+  // STATION 始终 true（前端 + 后端均强制）；EMAIL/SMS 默认勾选。
   return {
     TODO_TASK: { STATION: true, EMAIL: true, SMS: false },
     TICKET_ALERT: { STATION: true, EMAIL: true, SMS: true },

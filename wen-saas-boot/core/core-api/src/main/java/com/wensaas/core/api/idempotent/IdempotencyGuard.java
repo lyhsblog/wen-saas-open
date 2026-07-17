@@ -3,7 +3,7 @@ package com.wensaas.core.api.idempotent;
 import java.time.Duration;
 
 /**
- * 幂等去重护栏（底座共性基础能力，架构审查 M1 / M6）。
+ * 幂等去重护栏（底座共性基础能力）。
  *
  * <p>用于「至少一次」语义下的副作用去重：MQ 消费幂等、回调重投、openapi 窗口内重放等。
  * 以原子「首次声明」（SETNX）为核心原语，配合失败回滚，让重复触发的副作用只生效一次。

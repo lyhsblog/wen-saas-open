@@ -30,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   <li>注册顺序按拓扑序：b → a（a 依赖 b）</li>
  *   <li>sys_business_module 表写入完整：a 和 b 两行</li>
  *   <li>再次触发同步且 version 提升时执行 UPDATE</li>
+ *   <li>预置套餐 a.starter 落库上架（source_module=a、模块 = 声明 b ∪ 自身 a），二次同步幂等</li>
  * </ul>
  */
 @SpringBootTest(classes = SpiV2TestApp.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
@@ -53,9 +54,18 @@ class BusinessModuleSpiV2IntegrationTest {
     @Autowired
     BusinessModuleDbSynchronizer dbSynchronizer;
 
+    @Autowired
+    com.wensaas.core.impl.pkg.PackageSpiSynchronizer packageSpiSynchronizer;
+
+    @Autowired
+    org.springframework.context.ApplicationContext applicationContext;
+
     @AfterAll
     void cleanupAfter() {
         jdbc.update("DELETE FROM sys_business_module WHERE code IN (?, ?)", "a", "b");
+        jdbc.update("DELETE FROM sys_package_module WHERE package_id IN "
+                + "(SELECT id FROM sys_package WHERE code = ?)", "a.starter");
+        jdbc.update("DELETE FROM sys_package WHERE code = ?", "a.starter");
         jdbc.execute("DROP TABLE IF EXISTS a_item");
     }
 
@@ -97,5 +107,46 @@ class BusinessModuleSpiV2IntegrationTest {
                 new LambdaQueryWrapper<SysBusinessModule>().eq(SysBusinessModule::getCode, "a"));
         assertThat(a.getVersion()).isEqualTo("1.2.0");
         assertThat(a.getName()).isEqualTo("Module A v2");
+    }
+
+    @Test
+    @Order(4)
+    void declaredPackage_landedActiveWithSelfIncluded() {
+        var pkg = jdbc.queryForMap(
+                "SELECT status, is_system, source_module, default_ttl_days FROM sys_package WHERE code = ?",
+                "a.starter");
+        assertThat(((Number) pkg.get("status")).intValue()).isEqualTo(1);
+        assertThat(pkg.get("is_system")).isEqualTo(false);
+        assertThat(pkg.get("source_module")).isEqualTo("a");
+        assertThat(pkg.get("default_ttl_days")).isNull();
+
+        List<String> modules = jdbc.queryForList(
+                "SELECT module_code FROM sys_package_module WHERE package_id = "
+                        + "(SELECT id FROM sys_package WHERE code = ?) ORDER BY module_code",
+                String.class, "a.starter");
+        // 声明只写了 b，自身 a 由同步器隐含并入
+        assertThat(modules).containsExactly("a", "b");
+    }
+
+    @Test
+    @Order(5)
+    void syncAgain_isIdempotent_andPreservesOpsEdits() {
+        // 模拟运营改名后再次重启：整行不动（insert-if-missing）
+        jdbc.update("UPDATE sys_package SET name = ? WHERE code = ?", "运营改过的名字", "a.starter");
+
+        packageSpiSynchronizer.sync(List.copyOf(
+                applicationContext.getBeansOfType(
+                        com.wensaas.core.api.spi.BusinessModuleDescriptor.class).values()));
+
+        assertThat(jdbc.queryForObject(
+                "SELECT count(*) FROM sys_package WHERE code = ?", Integer.class, "a.starter"))
+                .isEqualTo(1);
+        assertThat(jdbc.queryForObject(
+                "SELECT name FROM sys_package WHERE code = ?", String.class, "a.starter"))
+                .isEqualTo("运营改过的名字");
+        assertThat(jdbc.queryForObject(
+                "SELECT count(*) FROM sys_package_module WHERE package_id = "
+                        + "(SELECT id FROM sys_package WHERE code = ?)", Integer.class, "a.starter"))
+                .isEqualTo(2);
     }
 }

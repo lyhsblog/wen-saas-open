@@ -213,13 +213,13 @@ const taskCenterManifest: BusinessModuleManifest = {
 };
 
 /**
- * 审计日志（UX3）。横切底座能力、非套餐门禁：审计日志按 audit.view 门禁；我的操作记录任意成员看自己。
+ * 审计日志。横切底座能力、非套餐门禁：审计日志按 audit.view 门禁；我的操作记录任意成员看自己。
  */
 const auditManifest: BusinessModuleManifest = {
   code: 'audit',
   name: '审计日志',
   version: '0.0.1',
-  description: '租户操作审计日志 + 我的操作记录（UX3）。',
+  description: '租户操作审计日志 + 我的操作记录。',
   alwaysOn: true,
   tenantRoutes: [
     {

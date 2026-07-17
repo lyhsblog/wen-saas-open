@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 /**
- * 分布式协调原语装配（架构审查 M1：统一 Redis 锁 + 去重基建）。
+ * 分布式协调原语装配（统一 Redis 锁 + 去重基建）。
  *
  * <p>{@link RedissonClient} 由 redisson-spring-boot-starter 自动装配，{@link StringRedisTemplate}
  * 由 spring-data-redis 自动装配；此处仅把它们包装成底座对外的框架无关契约

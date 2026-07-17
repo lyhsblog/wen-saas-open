@@ -28,6 +28,8 @@ public class SysPackage {
     private Integer status;
     /** 默认有效期（天）；NULL 表示永久 */
     private Integer defaultTtlDays;
+    /** 来源业务模块编码（SPI 声明的预置套餐）；NULL=运营手工创建。非 NULL 不可物理删除 */
+    private String sourceModule;
     private LocalDateTime createdAt;
     private Long createdBy;
     private LocalDateTime updatedAt;

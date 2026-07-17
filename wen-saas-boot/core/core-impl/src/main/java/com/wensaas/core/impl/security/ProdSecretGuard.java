@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 生产环境弱密钥兜底（架构审查 H3）。
+ * 生产环境弱密钥兜底。
  *
  * <p>JWT / MFA / 文件 AES 等密钥在 {@code application.yml} 都带「dev-only」内置默认值，便于本地起步；
  * 这些默认值是<b>写在源码 / git 里的公开串</b>，且各自只校验长度合法、不校验是否为已知弱值。一旦
@@ -58,7 +58,7 @@ public class ProdSecretGuard implements InitializingBean {
         if (authProperties.isAllowTenantIdHeader()) {
             log.warn("⚠ 生产环境(prod) 开启了 wen-saas-boot.auth.allow-tenant-id-header=true："
                     + "任意客户端可经 X-Tenant-Id header 指定租户上下文，存在越权风险，"
-                    + "请确认仅用于内网探针等可信场景（架构审查 M3）。");
+                    + "请确认仅用于内网探针等可信场景。");
         }
 
         List<String> violations = new ArrayList<>();

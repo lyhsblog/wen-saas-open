@@ -19,6 +19,8 @@ export type SidebarLinkItem = {
   disabled?: boolean;
   /** 'todo' / 'biz' 用于在原型中标记"待出"/"业务"占位，渲染为右侧小药丸。 */
   status?: 'todo' | 'biz';
+  /** 标签右侧的自定义节点（如引导标），渲染在 badge / 状态药丸之前。 */
+  suffix?: ReactNode;
   /** 右上角红色 badge 数量（>0 才渲染）。 */
   badge?: number;
   /** 自定义 statusHint，title 显示。 */
@@ -236,6 +238,7 @@ export function SidebarMenu({ items, selectedKey, onClick, density = 'tenant' }:
         >
           {item.label}
         </span>
+        {item.suffix}
         {item.badge != null && item.badge > 0 && !item.status && <DangerDot value={item.badge} />}
         {item.status === 'todo' && <PillBadge kind="todo">待出</PillBadge>}
         {item.status === 'biz' && <PillBadge kind="biz">业务</PillBadge>}

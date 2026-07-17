@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 
 /**
- * 公开密码重置的业务编排（架构审查 M11）。
+ * 公开密码重置的业务编排。
  *
  * <p>原先这套 token 校验 + 密码哈希 + 账号激活 + 标记 token 的多步写逻辑内联在
  * {@code PasswordResetPublicController} 里，既越层直接操作 Mapper，又是无事务的安全敏感写路径

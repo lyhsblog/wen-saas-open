@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
  *   <li>实例名翻译——自定义字段 REF（{@code cf_parent} 集团母公司自关联）的 {@code __label} 填充</li>
  * </ul>
  *
- * <p>经底座 {@link NameSourceFactory} 一行注册，纯 api 依赖、不下沉 {@code core.impl.*}（架构审查 M10）。
+ * <p>经底座 {@link NameSourceFactory} 一行注册，纯 api 依赖、不下沉 {@code core.impl.*}。
  * entityType 必须与 {@code @CustomFieldExtension.objectCode} / {@code CustomFieldObjectDef.code}
  * 一致（{@code crm_demo.customer}）。REF 翻不到的 id（已删除）按契约从结果 Map 略去，前端按 id 兜底。
  */
