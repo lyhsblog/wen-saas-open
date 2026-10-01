@@ -1,0 +1,152 @@
+# 生产 Docker 编排（域名 567cc.cc · prod profile · local 文件存储）
+#
+#   cd deploy/docker-prod
+#   cp .env.example .env   # 填密钥与密码
+#   ./scripts/init-ssl.sh  # 首次：自签或 Let's Encrypt 准备目录
+#   docker compose up -d --build
+#
+# 与 open-docs/.../docker（dev 全容器）项目名不同，但同机不要同时占用 80/443/8080。
+name: wen-saas-prod
+
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: wen_saas
+      TZ: Asia/Shanghai
+    volumes:
+      - pg-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d wen_saas']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:8.0-bookworm
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli -a ${REDIS_PASSWORD} ping | grep -q PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  rocketmq-namesrv:
+    image: apache/rocketmq:5.3.2
+    restart: unless-stopped
+    environment:
+      JAVA_OPT_EXT: -Xms256M -Xmx256M
+    command: sh mqnamesrv
+
+  rocketmq-broker:
+    image: apache/rocketmq:5.3.2
+    restart: unless-stopped
+    user: root
+    environment:
+      NAMESRV_ADDR: rocketmq-namesrv:9876
+      JAVA_OPT_EXT: -Xms512M -Xmx1G
+    volumes:
+      - rocketmq-broker-data:/home/rocketmq/store
+      - ./broker.conf:/home/rocketmq/broker.conf
+    depends_on:
+      - rocketmq-namesrv
+    command: sh mqbroker -c /home/rocketmq/broker.conf
+
+  rocketmq-proxy:
+    image: apache/rocketmq:5.3.2
+    restart: unless-stopped
+    environment:
+      NAMESRV_ADDR: rocketmq-namesrv:9876
+      JAVA_OPT_EXT: -Xmx1G
+    depends_on:
+      - rocketmq-broker
+      - rocketmq-namesrv
+    command: sh mqproxy
+
+  rocketmq-topic-init:
+    image: apache/rocketmq:5.3.2
+    restart: 'no'
+    depends_on:
+      - rocketmq-broker
+    entrypoint:
+      - sh
+      - -c
+      - |
+        set -e
+        echo "waiting for broker registered on namesrv...";
+        for i in $$(seq 1 60); do
+          if sh mqadmin clusterList -n rocketmq-namesrv:9876 2>/dev/null | grep -q broker-a; then
+            echo "broker is up"; break;
+          fi
+          sleep 2;
+        done
+        for t in wen_audit_operation wen_audit_login wen_notify_station wen_notify_email \
+                 wen_notify_sms wen_notify_im wen_task_execute wen_api_call_log wen_event; do
+          sh mqadmin updateTopic -n rocketmq-namesrv:9876 -c DefaultCluster -t $$t;
+        done
+        sh mqadmin updateTopic -n rocketmq-namesrv:9876 -c DefaultCluster -t wen_webhook_send -a +message.type=DELAY
+        echo "all topics ready";
+
+  backend:
+    build:
+      context: ../../wen-saas-boot
+      dockerfile: ../open-docs/非程序员体验依赖/docker/backend.Dockerfile
+      args:
+        MAVEN_MIRROR: ${MAVEN_MIRROR:-https://repo.maven.apache.org/maven2}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/wen_saas
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      WEN_SAAS_BOOT_REDIS_HOST: redis
+      WEN_SAAS_BOOT_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      WEN_SAAS_BOOT_ROCKETMQ_ENDPOINTS: rocketmq-proxy:8081
+      WEN_SAAS_BOOT_ROCKETMQ_SSL: 'false'
+      WEN_SAAS_BOOT_FILE_PLATFORM_DEFAULT_BACKEND: local
+      WEN_SAAS_BOOT_FILE_LOCAL_ROOT: /app/data/files
+      TZ: Asia/Shanghai
+    volumes:
+      - backend-files:/app/data/files
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rocketmq-proxy:
+        condition: service_started
+      rocketmq-topic-init:
+        condition: service_completed_successfully
+
+  gateway:
+    build:
+      context: ../..
+      dockerfile: deploy/docker-prod/gateway.Dockerfile
+      args:
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org}
+        VITE_TENANT_BASE_DOMAIN: ${VITE_TENANT_BASE_DOMAIN:-567cc.cc}
+        VITE_TENANT_WEB_ORIGIN: ${VITE_TENANT_WEB_ORIGIN:-https://567cc.cc}
+        VITE_H5_WEB_ORIGIN: ${VITE_H5_WEB_ORIGIN:-https://m.567cc.cc}
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./ssl:/etc/nginx/ssl:ro
+      - certbot-webroot:/var/www/certbot
+    depends_on:
+      backend:
+        condition: service_started
+
+volumes:
+  pg-data:
+  redis-data:
+  rocketmq-broker-data:
+  backend-files:
+  certbot-webroot:
