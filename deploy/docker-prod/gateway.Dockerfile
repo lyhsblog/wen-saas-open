@@ -29,5 +29,7 @@ RUN mkdir -p /var/www/certbot
 COPY --from=frontend-build /build/dist/ops-web /var/www/ops
 COPY --from=frontend-build /build/dist/tenant-web /var/www/tenant
 COPY --from=frontend-build /build/dist/h5 /var/www/h5
+RUN mkdir -p /etc/nginx/conf.d/snippets
+COPY deploy/docker-prod/nginx-common-locations.conf /etc/nginx/conf.d/snippets/wen_saas_common_locations.conf
 COPY deploy/docker-prod/nginx-edge.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80 443

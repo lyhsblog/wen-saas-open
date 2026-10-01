@@ -38,7 +38,23 @@ sg docker -c 'docker compose up -d --build'
 
 初始运营账号：`admin@ops` / `admin123`
 
-自签证书首次访问需在浏览器信任或换正式证书（覆盖 `ssl/fullchain.pem`、`ssl/privkey.pem` 后 `docker compose restart gateway`）。
+源站使用 **`scripts/init-ssl.sh` 生成的自签证书**（`ssl/fullchain.pem`）。浏览器直连源 IP:443 会报证书不受信任；**访客走 Cloudflare 代理时看到的是 Cloudflare 的证书**，一般无需在浏览器里信任自签。
+
+## Cloudflare（DNS 橙云代理）
+
+典型 **重定向死循环** 原因：Cloudflare 设为 **Flexible**（访客↔CF 走 HTTPS，CF↔源站只走 HTTP:80），而源站 Nginx 对 80 一律 `301 → https://`，CF 反复回源 80 → 无限 301。
+
+当前 `nginx-edge.conf` 已处理：当回源请求带 **`X-Forwarded-Proto: https`**（CF 默认会带）时，**在 80 端口直接提供站点**，不再 301。
+
+建议在 Cloudflare 控制台：
+
+| 项 | 推荐 |
+|----|------|
+| SSL/TLS 加密模式 | **Full**（源站自签即可，CF 不校验源站证书）或 **Full (strict)** + [源站证书](https://developers.cloudflare.com/ssl/origin-configuration/origin-ca/) 替换 `ssl/` |
+| 避免 | **Flexible**（除非只开放 80 且接受上面逻辑；仍推荐改 Full） |
+| 回源端口 | Full 时可只开 **443**，或 80+443 均可 |
+
+改完 Nginx 配置后：`sg docker -c 'docker compose exec gateway nginx -t && docker compose exec gateway nginx -s reload'`（配置已挂载进容器，无需重建镜像）。
 
 ## 换正式 HTTPS（Let's Encrypt 示例）
 
