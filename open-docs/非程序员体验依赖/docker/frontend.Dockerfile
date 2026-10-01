@@ -9,11 +9,11 @@
 # 缓存设计：pnpm store 走 BuildKit cache mount，依赖只在首次构建时下载；
 # `pnpm fetch` 层只依赖 lockfile，源码改动不触发重新拉取。三端镜像共享安装层，
 # 只有各自的构建步骤分开执行。
-# 依赖默认走 npmmirror 镜像源（本编排主要受众在中国境内）；需要官方源时构建传参：
-#   NPM_REGISTRY=https://registry.npmjs.org
+# 依赖默认走 npm 官方 registry；需要国内镜像时构建传参：
+#   NPM_REGISTRY=https://registry.npmmirror.com
 
 FROM node:24-bookworm AS build
-ARG NPM_REGISTRY=https://registry.npmmirror.com
+ARG NPM_REGISTRY=https://registry.npmjs.org
 # 写入 /root/.npmrc，npm（装 pnpm）与 pnpm（fetch/install）都读它
 RUN npm config set registry ${NPM_REGISTRY} && npm i -g pnpm@11.2.2 && pnpm config set store-dir /pnpm-store
 WORKDIR /build

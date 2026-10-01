@@ -119,9 +119,9 @@ services:
       # dockerfile 相对 context 解析；编排相关文件统一放本目录，不侵入后端源码目录
       dockerfile: ../open-docs/非程序员体验依赖/docker/backend.Dockerfile
       args:
-        # Maven 依赖镜像源，默认阿里云（与 Dockerfile 内默认值一致）；需要官方源时
-        # 构建前设环境变量 MAVEN_MIRROR=https://repo.maven.apache.org/maven2
-        MAVEN_MIRROR: ${MAVEN_MIRROR:-https://maven.aliyun.com/repository/public}
+        # Maven 依赖镜像源，默认 Maven Central（与 Dockerfile 内默认值一致）；需要国内镜像时
+        # 构建前设环境变量 MAVEN_MIRROR=https://maven.aliyun.com/repository/public
+        MAVEN_MIRROR: ${MAVEN_MIRROR:-https://repo.maven.apache.org/maven2}
     restart: unless-stopped
     ports:
       - '8080:8080'
@@ -158,9 +158,9 @@ services:
       args:
         BUILD_SCRIPT: build:ops
         DIST_DIR: ops-web
-        # npm 依赖镜像源，默认 npmmirror（与 Dockerfile 内默认值一致）；需要官方源时
-        # 构建前设环境变量 NPM_REGISTRY=https://registry.npmjs.org
-        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
+        # npm 依赖镜像源，默认 npm 官方（与 Dockerfile 内默认值一致）；需要国内镜像时
+        # 构建前设环境变量 NPM_REGISTRY=https://registry.npmmirror.com
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org}
         # 运营端生成的租户端 / H5 端链接用本地地址
         VITE_TENANT_WEB_ORIGIN: http://localhost:5174
         VITE_H5_WEB_ORIGIN: http://m.localhost:5175
@@ -183,7 +183,7 @@ services:
       args:
         BUILD_SCRIPT: build:tenant
         DIST_DIR: tenant-web
-        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org}
         # 租户端子域基础域（{租户编码}.localhost）
         VITE_TENANT_BASE_DOMAIN: localhost
     restart: unless-stopped
@@ -204,7 +204,7 @@ services:
       args:
         BUILD_SCRIPT: build:h5
         DIST_DIR: h5
-        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org}
         # H5 端子域基础域（{租户编码}.m.localhost）
         VITE_TENANT_BASE_DOMAIN: m.localhost
     restart: unless-stopped

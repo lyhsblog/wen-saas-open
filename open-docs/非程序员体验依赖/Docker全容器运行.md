@@ -15,7 +15,7 @@
 |---|---|
 | Docker Desktop | 较新版本（Compose v2、BuildKit，近两年的版本都满足） |
 | 资源 | 建议给 Docker 分配 ≥ 4G 内存；磁盘空闲 ≥ 20G |
-| 网络 | 首次启动要拉取基础镜像并下载 Maven / npm 依赖，量不小。依赖下载**默认已走国内镜像源**（Maven=阿里云、npm=npmmirror），境内网络开箱即用；基础镜像从 Docker Hub 拉取，境内建议先给 Docker 配好镜像加速（`daemon.json` 的 `registry-mirrors`） |
+| 网络 | 首次启动要拉取基础镜像并下载 Maven / npm 依赖，量不小。依赖下载**默认走官方源**（Maven Central、npm 官方 registry）；基础镜像从 Docker Hub 拉取。境内若下载慢，可在构建时用环境变量改国内镜像（见 §5 常见问题） |
 
 ## 2. 一键启动
 
@@ -95,14 +95,14 @@ docker compose down -v
 - `docker compose logs rocketmq-topic-init` 末行应为 `all topics ready`；不是的话 `docker compose up -d` 重跑一次。
 
 **首次构建后端很慢或下载超时**
-- 依赖下载默认走国内镜像源，一般不会卡；若卡在**拉取基础镜像**（日志停在 `FROM …` / `pulling …`），是 Docker 本身没配镜像加速，给 Docker 的 `daemon.json` 配 `registry-mirrors` 后重试。
+- 依赖默认从 Maven Central / npm 官方拉取；若卡在**拉取基础镜像**（日志停在 `FROM …` / `pulling …`），可给 Docker 的 `daemon.json` 配 `registry-mirrors` 加速 Hub。
 - 失败后直接重跑 `docker compose up -d --build`，已下载的依赖有缓存不会重来。
 
-**在海外网络环境，想用官方依赖源**
-- 构建时设环境变量覆盖默认镜像源（之后重建同理带上）：
+**在境内网络，想用国内依赖镜像加速**
+- 构建时设环境变量覆盖默认源（之后重建同理带上）：
   ```bash
-  MAVEN_MIRROR=https://repo.maven.apache.org/maven2 \
-  NPM_REGISTRY=https://registry.npmjs.org \
+  MAVEN_MIRROR=https://maven.aliyun.com/repository/public \
+  NPM_REGISTRY=https://registry.npmmirror.com \
   docker compose up -d --build
   ```
 
